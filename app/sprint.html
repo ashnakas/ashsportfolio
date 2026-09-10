@@ -485,7 +485,7 @@ canvas#riveCanvas {
         if (debugInfo) debugInfo.style.display = 'none';
         const isMobile = window.innerWidth < CONFIG.mobile.breakpoint;
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color('#0039FF');
+        scene.background = new THREE.Color('#087f80');
         // Portfolio objects are rendered as a transparent foreground layer. This keeps
         // the reference camera, walk cycle, set, timing, and scroll mapping untouched.
         const portfolioScene = new THREE.Scene();
@@ -519,6 +519,13 @@ canvas#riveCanvas {
         cursorShadow.position.set(0, -2.82, 3.65);
         portfolioScene.add(cursorShadow);
         const textureLoader = new THREE.TextureLoader();
+        const y2kComputer = new THREE.Mesh(
+            new THREE.PlaneGeometry(5.2, 5.2),
+            new THREE.MeshBasicMaterial({ map: textureLoader.load('/y2k-computer.png'), transparent: true, toneMapped: false })
+        );
+        y2kComputer.position.set(0, 2.15, -1.75);
+        y2kComputer.rotation.z = -0.035;
+        portfolioScene.add(y2kComputer);
         const artifactSpecs = [
             ['/projects/pinwheels.png', -3.85, 1.55, -0.15, 0.06],
             ['/projects/recart.png', 3.78, 1.8, -0.55, -0.05],
@@ -857,6 +864,9 @@ canvas#riveCanvas {
             portfolioCursor.rotation.y = -0.28 + Math.sin(currentScrollProgress * Math.PI) * 0.12;
             portfolioCursor.scale.setScalar(isMobile ? 0.72 : 1);
             cursorShadow.scale.setScalar(1 - Math.abs(Math.sin(walkCycle)) * 0.16);
+            y2kComputer.position.y = 2.15 + Math.sin(currentTime * 0.00045) * 0.08;
+            y2kComputer.rotation.y = mouse.x * 0.035;
+            y2kComputer.scale.setScalar((0.88 + smooth(0.04, 0.25, currentScrollProgress) * 0.12) * (isMobile ? 0.72 : 1));
             portfolioArtifacts.forEach((artifact, index) => {
                 const entrance = Math.max(0, Math.min(1, (currentScrollProgress - index * 0.08) / 0.2));
                 const float = Math.sin(currentTime * 0.00055 + artifact.userData.phase);
