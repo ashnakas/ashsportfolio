@@ -866,7 +866,7 @@ canvas#riveCanvas {
             cursorShadow.scale.setScalar(1 - Math.abs(Math.sin(walkCycle)) * 0.16);
             y2kComputer.position.y = 2.15 + Math.sin(currentTime * 0.00045) * 0.08;
             y2kComputer.rotation.y = mouse.x * 0.035;
-            y2kComputer.scale.setScalar((0.88 + smooth(0.04, 0.25, currentScrollProgress) * 0.12) * (isMobile ? 0.72 : 1));
+            y2kComputer.scale.setScalar((0.88 + lerp(0.04, 0.25, currentScrollProgress) * 0.12) * (isMobile ? 0.72 : 1));
             portfolioArtifacts.forEach((artifact, index) => {
                 const entrance = Math.max(0, Math.min(1, (currentScrollProgress - index * 0.08) / 0.2));
                 const float = Math.sin(currentTime * 0.00055 + artifact.userData.phase);
