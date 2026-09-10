@@ -707,6 +707,11 @@ canvas#riveCanvas {
             }
             requestAnimationFrame(step);
         }
+        // Ease a value across a scroll interval for the floating portfolio props.
+        function smooth(start, end, value) {
+            if (end <= start) return value >= end ? 1 : 0;
+            return Math.max(0, Math.min(1, (value - start) / (end - start)));
+        }
         function startIntroScroll() {
             if (introScrollDone || window.scrollY > 0) return;
             const maxScroll = getMaxScroll();
