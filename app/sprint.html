@@ -1,32 +1,19 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Ashna Kasireddy — The Observatory</title>
-  <meta name="description" content="A little space for curiosity. Explore Ashna Kasireddy’s product design work in an observatory above the clouds.">
-  <link rel="icon" href="/favicon.svg"><link rel="stylesheet" href="/observatory.css">
-  <script type="importmap">{"imports":{"three":"/vendor/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
-</head>
-<body>
-  <a class="skip-link" href="#work">Skip to selected work</a>
-  <header class="site-header"><a class="wordmark" href="#">ASHNA KASIREDDY<span>PRODUCT DESIGNER</span></a><a class="work-link" href="#work">Selected work <span>↗</span></a></header>
-  <main>
-    <section id="journey" aria-label="A journey through Ashna’s observatory">
-      <div class="scene" id="canvas-container" aria-hidden="true"></div>
-      <div class="scene-ui" id="scene-ui">
-        <div class="opening" id="opening"><p class="eyebrow">A LITTLE SPACE FOR CURIOSITY</p><h1>Ashna’s<br><em>observatory.</em></h1><p class="intro-copy">Thoughtful design.<br>A different perspective.</p></div>
-        <div class="chapter" id="chapter" aria-hidden="true"><p class="eyebrow" id="chapter-kind"></p><h2 id="chapter-title"></h2><p id="chapter-copy"></p><a id="chapter-link" href="#work" tabindex="-1">Explore the project <span>↗</span></a></div>
-        <div class="arrival" id="arrival"><p class="eyebrow">YOU’VE ARRIVED</p><h2>Make room<br>for <em>possibility.</em></h2></div>
-        <div class="journey-footer"><span id="journey-status" role="status">Preparing your little corner of the sky…</span><span class="coordinates">THE OBSERVATORY <i>✦</i> EST. 2026</span><span id="journey-count">00 / 04</span></div>
-        <div class="journey-progress"><i id="progress-fill"></i></div>
-      </div>
-    </section>
-  </main>
-  <script src="/portfolio-after.js"></script>
-  <script>
-    window.observatoryFailed=function(){document.body.classList.add('scene-failed');document.getElementById('journey-status').textContent='The sky is taking a moment. Your work is ready below.';};
-    window.observatoryTimer=setTimeout(window.observatoryFailed,15000);
-    import('/observatory.js').catch(function(error){console.error(error);window.observatoryFailed();});
-  </script>
-</body>
-</html>
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ashna Kasireddy — Scroll City</title>
+<meta name="description" content="AI-forward. Product-minded. UI/UX designer. Accessible, intuitive experiences for humans and their agents.">
+<link rel="icon" href="/favicon.svg"><link rel="stylesheet" href="/city.css">
+<script type="importmap">{"imports":{"three":"/vendor/three.module.js"}}</script>
+</head><body>
+<div id="scene-loader" role="status" aria-label="Loading portfolio"><div class="loader-name">ASHNA<br>KASIREDDY</div><div class="loader-track"><i id="loader-fill"></i></div><span id="loader-status">PREPARING THE SCENE</span><a href="#work" onclick="document.body.classList.add('scene-ready')">Skip to work ↗</a></div>
+<a class="skip-link" href="#work">Skip intro and view selected work</a>
+<header class="site-header"><a class="wordmark" href="#">ASHNA KASIREDDY <span>SCROLL CITY</span></a><a class="work-link" href="#work">View work <span>↗</span></a></header>
+<main><section id="journey" aria-label="Scroll City: a three-scroll introduction">
+<div id="canvas-container" class="scene" aria-hidden="true"></div>
+<div class="sr-only"><h1>Ashna Kasireddy. AI-forward, product-minded UI/UX designer.</h1><p>Make the complex feel clear. Accessible interfaces. Thoughtful product decisions.</p><p>Human needs. AI possibilities. From an idea to something you can use.</p><p>ReCart: four marketplaces, one search. Product design and development.</p><p>Three scroll gestures advance through the intro. You can skip directly to selected work.</p></div>
+<div class="scene-ui" id="scene-ui"><div id="intro-title"><p>ASHNA KASIREDDY · PRODUCT DESIGNER</p><h2>Complex<span>→ Clear.</span></h2></div><a href="#work" id="enter-work">Explore selected work <span>↗</span></a><div class="journey-footer"><span id="journey-status" role="status">STEPPING INTO THE CITY…</span><span class="coordinates">UI / UX <i>+</i> HUMAN / AI</span><span id="journey-count">00 / 03</span></div><div class="journey-progress"><i id="progress-fill"></i></div></div>
+<div class="fallback-copy"><h1>Ashna Kasireddy.</h1><p>AI-forward. Product-minded. UI/UX designer.</p><p>Accessible by design. Intuitive in use.<br>Creating with AI, for humans and their agents.</p><a href="#work">Explore selected work ↗</a></div>
+</section></main>
+<script src="/portfolio-after.js"></script>
+<script>window.cityLoadProgress=function(value){document.getElementById('loader-fill').style.transform='scaleX('+value/100+')';document.getElementById('loader-status').textContent=value===100?'READY':value+'%';};window.cityLoadProgress(15);window.cityFailed=function(){document.body.classList.add('scene-failed');};window.cityTimer=setTimeout(window.cityFailed,10000);import('/city-entry.js').catch(function(e){console.error(e);window.cityFailed();});</script>
+</body></html>
