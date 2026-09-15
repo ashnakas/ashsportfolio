@@ -32,4 +32,7 @@ a:focus-visible{outline-color:#ff897e}.work-link span,.coordinates i,#enter-work
 
 #intro-title{position:absolute;top:18%;left:8%;right:8%;text-align:center;color:#fff;text-shadow:0 2px 24px #1020a055}#intro-title p{font-size:14px;letter-spacing:.09em}#intro-title h2{font-size:clamp(60px,10vw,145px);line-height:.92;letter-spacing:-.065em;margin:24px 0;font-weight:700}#intro-title h2 span{display:block}#intro-title h2 span{color:#dbe2ff}@media(max-width:767px){#intro-title{top:18%;left:5%;right:5%}#intro-title p{font-size:12px;letter-spacing:.03em}#intro-title h2{font-size:clamp(52px,16vw,92px)}}
 /* Keep the principle graphics unobstructed; the header provides the work link. */
-#enter-work{display:none}.journey-footer{background:#0b0e18e8;padding:9px 12px;border-radius:6px;bottom:16px}.journey-footer #journey-status{font-size:12px}
+#enter-work{display:block}.journey-footer{background:#0b0e18e8;padding:9px 12px;border-radius:6px;bottom:16px}.journey-footer #journey-status{font-size:12px}
+
+/* Scroll City uses a deliberately narrow palette so the moving interfaces stay legible. */
+:root{background:#030817;color:#fff}.scene{background:#1234cb}.site-header{color:#fff}.wordmark,.work-link{color:#fff}.work-link span,.coordinates i,#enter-work span{color:#fff}.journey-progress i{background:#fff}.journey-footer{background:#02050fd9;border:1px solid #ffffff42;color:#fff}.loader-track i{background:#fff}#scene-loader{background:#061564}.scene-failed .fallback-copy{background:#061564;color:#fff}.fallback-copy p{color:#dbe5ff}a:focus-visible{outline-color:#fff}.portfolio-work-title em{color:#fff}
