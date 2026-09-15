@@ -2,7 +2,7 @@ const work = document.createElement('section');
 work.id = 'work';
 work.className = 'portfolio-work';
 work.innerHTML = `<header><span>SELECTED WORK / ASHNA KASIREDDY</span><a href="mailto:akasireddy3@gatech.edu">LET’S TALK ↗</a></header>
-<div class="portfolio-work-title"><h2>A closer<br><em>look.</em></h2><p>Product decisions, interface details,<br>and the work behind them.</p></div>
+<div class="portfolio-work-title"><h2>Selected work<span> (04)</span></h2><p>Product design. Interaction. Accessibility.</p></div>
 <div class="portfolio-grid">
 <a href="/recart"><img src="/projects/recart.png" alt="ReCart marketplace search"><span>PRODUCT DESIGN · DEVELOPMENT</span><h3>ReCart ↗</h3><p>Four resale marketplaces. One place to find your next thing.</p></a>
 <a href="/pinwheels"><img src="/projects/pinwheels.png" alt="Pinwheels product concept"><span>PRODUCT CONCEPT · INTERACTION DESIGN</span><h3>Pinwheels ↗</h3><p>Turning passive scrolling into purposeful discovery.</p></a>
