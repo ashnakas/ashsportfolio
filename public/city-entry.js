@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import {createScrollCity,cityCamera} from './scroll-city.js';
+import {createSculptureWorld,sculptureCamera} from './sculpture-world.js';
 
 const section=document.querySelector('#journey'),container=document.querySelector('#canvas-container'),ui=document.querySelector('#scene-ui');
 const status=document.querySelector('#journey-status'),count=document.querySelector('#journey-count'),fill=document.querySelector('#progress-fill');
@@ -27,11 +27,11 @@ try{
   renderer.setPixelRatio(Math.min(Math.max(devicePixelRatio,2),3));renderer.setSize(innerWidth,innerHeight);
   renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;container.append(renderer.domElement);
   const scene=new THREE.Scene();camera=new THREE.PerspectiveCamera(42,innerWidth/innerHeight,.1,180);
-  world=createScrollCity(scene,renderer);ready=true;window.cityLoadProgress?.(55);
+  world=createSculptureWorld(scene,renderer);ready=true;window.cityLoadProgress?.(55);
   Promise.race([world.assetsReady,new Promise(resolve=>setTimeout(resolve,8000))]).then(()=>{
     if(!ready)return;
     world.update(target,reduced?0:performance.now(),innerWidth<768);
-    cityCamera(camera,target,innerWidth<768);renderer.render(scene,camera);
+    sculptureCamera(camera,target,innerWidth<768);renderer.render(scene,camera);
     window.cityLoadProgress?.(100);clearTimeout(window.cityTimer);document.body.classList.remove('scene-failed');document.body.classList.add('scene-ready');
   });
   window.addEventListener('scroll',scrollState,{passive:true});
@@ -53,12 +53,12 @@ try{
   function draw(now){
     raf=requestAnimationFrame(draw);if(document.hidden||now-last<20)return;last=now;if(scrollY>section.offsetHeight+innerHeight)return;
     progress=reduced?target:THREE.MathUtils.lerp(progress,target,.16);if(Math.abs(progress-target)<.0005)progress=target;
-    const mobile=innerWidth<768;cityCamera(camera,progress,mobile);
+    const mobile=innerWidth<768;sculptureCamera(camera,progress,mobile);
     if(!reduced&&!mobile){parallax.lerp(pointer,.07);camera.rotation.y-=parallax.x*.006;camera.rotation.x+=parallax.y*.004;}
     world.update(progress,reduced?0:now,mobile);
     const title=document.querySelector('#intro-title');title.style.opacity=1-clamp(progress/.20,0,1);title.style.visibility=progress<.20?'visible':'hidden';
     const beat=progress<.20?0:progress<.45?1:progress<.72?2:3;count.textContent='0'+beat+' / 03';
-    status.textContent=beat===3?'EXPLORE SELECTED WORK ↓':'SCROLL TO ENTER ↓';
+    status.textContent=beat===3?'EXPLORE SELECTED WORK ↓':'CONTINUE ↓';
     fill.style.transform=`scaleX(${Math.min(progress/.68,1)})`;
     document.querySelector('#enter-work').classList.toggle('visible',progress>.72);
     const fade=1-clamp((scrollY-section.offsetHeight+innerHeight*.22)/(innerHeight*.22),0,1);container.style.opacity=fade;ui.style.opacity=fade;
