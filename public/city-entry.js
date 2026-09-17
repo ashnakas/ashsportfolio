@@ -22,9 +22,12 @@ function advance(direction){
 }
 function fail(error){console.error('Scroll City could not start:',error);clearTimeout(window.cityTimer);window.cityFailed();}
 try{
-  renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance',precision:'highp'});
+  // MSAA and highp shading are both expensive on mobile GPUs; drop both there rather than tune
+  // fidelity no one on a phone can tell apart from the cheaper path.
+  const mobileGpu=innerWidth<768;
+  renderer=new THREE.WebGLRenderer({antialias:!mobileGpu,powerPreference:'high-performance',precision:mobileGpu?'mediump':'highp'});
   renderer.localClippingEnabled=true;
-  renderer.setPixelRatio(Math.min(devicePixelRatio,innerWidth<768?1.75:2.5));renderer.setSize(innerWidth,innerHeight);
+  renderer.setPixelRatio(Math.min(devicePixelRatio,mobileGpu?1.5:2.5));renderer.setSize(innerWidth,innerHeight);
   renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;container.append(renderer.domElement);
   const scene=new THREE.Scene();camera=new THREE.PerspectiveCamera(42,innerWidth/innerHeight,.1,180);
   world=createScrollCity(scene,renderer);ready=true;window.cityLoadProgress?.(55);
@@ -46,7 +49,7 @@ try{
   window.addEventListener('touchcancel',()=>{touch=null;},{passive:true});
   window.addEventListener('keydown',event=>{if(!inside()||event.target.closest('a,button,input,textarea,select,[contenteditable]'))return;const down=['ArrowDown','PageDown',' '].includes(event.key),up=['ArrowUp','PageUp'].includes(event.key);if(down||up){event.preventDefault();if(!event.repeat)advance(up||event.shiftKey?-1:1);}});
   window.addEventListener('pointermove',event=>{pointer.set(event.clientX/innerWidth*2-1,1-event.clientY/innerHeight*2);},{passive:true});
-  window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;renderer.setPixelRatio(Math.min(devicePixelRatio,innerWidth<768?1.75:2.5));renderer.setSize(innerWidth,innerHeight);scrollState();});
+  window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;renderer.setPixelRatio(Math.min(devicePixelRatio,innerWidth<768?1.5:2.5));renderer.setSize(innerWidth,innerHeight);scrollState();});
   renderer.domElement.addEventListener('webglcontextlost',event=>{event.preventDefault();ready=false;cancelAnimationFrame(raf);fail(new Error('Graphics context lost'));});
   renderer.domElement.addEventListener('webglcontextrestored',()=>location.reload());
   scrollState();progress=target;
