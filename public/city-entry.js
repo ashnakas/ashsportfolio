@@ -4,7 +4,6 @@ import {createScrollCity,cityCamera} from './scroll-city.js';
 const section=document.querySelector('#journey'),container=document.querySelector('#canvas-container'),ui=document.querySelector('#scene-ui');
 const status=document.querySelector('#journey-status'),count=document.querySelector('#journey-count'),fill=document.querySelector('#progress-fill');
 const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
-const endCard=document.createElement('div');endCard.className='scene-end';endCard.innerHTML='<h2>Ashna Kasireddy</h2><p>Full stack · Human + AI</p>';ui.append(endCard);
 const clamp=THREE.MathUtils.clamp;
 let renderer,world,camera,raf,progress=0,target=0,last=0,ready=false;
 let lastWheel=-1000,destination=0,movingUntil=0,touch=null;
@@ -25,7 +24,7 @@ function fail(error){console.error('Scroll City could not start:',error);clearTi
 try{
   renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance',precision:'highp'});
   renderer.localClippingEnabled=true;
-  renderer.setPixelRatio(Math.min(Math.max(devicePixelRatio,2),3));renderer.setSize(innerWidth,innerHeight);
+  renderer.setPixelRatio(Math.min(devicePixelRatio,innerWidth<768?1.75:2.5));renderer.setSize(innerWidth,innerHeight);
   renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;container.append(renderer.domElement);
   const scene=new THREE.Scene();camera=new THREE.PerspectiveCamera(42,innerWidth/innerHeight,.1,180);
   world=createScrollCity(scene,renderer);ready=true;window.cityLoadProgress?.(55);
@@ -47,7 +46,7 @@ try{
   window.addEventListener('touchcancel',()=>{touch=null;},{passive:true});
   window.addEventListener('keydown',event=>{if(!inside()||event.target.closest('a,button,input,textarea,select,[contenteditable]'))return;const down=['ArrowDown','PageDown',' '].includes(event.key),up=['ArrowUp','PageUp'].includes(event.key);if(down||up){event.preventDefault();if(!event.repeat)advance(up||event.shiftKey?-1:1);}});
   window.addEventListener('pointermove',event=>{pointer.set(event.clientX/innerWidth*2-1,1-event.clientY/innerHeight*2);},{passive:true});
-  window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;renderer.setPixelRatio(Math.min(Math.max(devicePixelRatio,2),3));renderer.setSize(innerWidth,innerHeight);scrollState();});
+  window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;renderer.setPixelRatio(Math.min(devicePixelRatio,innerWidth<768?1.75:2.5));renderer.setSize(innerWidth,innerHeight);scrollState();});
   renderer.domElement.addEventListener('webglcontextlost',event=>{event.preventDefault();ready=false;cancelAnimationFrame(raf);fail(new Error('Graphics context lost'));});
   renderer.domElement.addEventListener('webglcontextrestored',()=>location.reload());
   scrollState();progress=target;
@@ -62,7 +61,6 @@ try{
     status.textContent=beat===3?'EXPLORE SELECTED WORK ↓':'SCROLL TO ENTER ↓';
     fill.style.transform=`scaleX(${Math.min(progress/.68,1)})`;
     document.querySelector('#enter-work').classList.toggle('visible',progress>.72);
-    endCard.classList.toggle('visible',progress>.76);
     const fade=1-clamp((scrollY-section.offsetHeight+innerHeight*.22)/(innerHeight*.22),0,1);container.style.opacity=fade;ui.style.opacity=fade;
     renderer.render(scene,camera);
   }

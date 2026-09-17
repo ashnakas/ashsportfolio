@@ -1,18 +1,17 @@
 import * as THREE from 'three';
 
 export const billboardCopy=[
-  {name:'Ashna Kasireddy',lines:['ASHNA','KASIREDDY'],sub:['FULL STACK'],fg:'#ffffff',width:5.0,height:3.4,pos:[0,8.8,-8.98],turn:0},
-  {name:'One clear action',lines:[],sub:[],fg:'#ffffff',width:5.0,height:5.8,pos:[-7.37,5.2,15.5],turn:Math.PI/2},
-  {name:'Human and AI',lines:[],sub:[],fg:'#ffffff',width:5.0,height:5.2,pos:[9.37,5.5,5.6],turn:-Math.PI/2},
+  {name:'Ashna Kasireddy',lines:['ASHNA','KASIREDDY'],sub:['FULL STACK · PRODUCT · AI'],fg:'#ffffff',width:5.8,height:3.6,pos:[0,8.8,-8.98],turn:0},
+  {name:'One clear action',lines:[],sub:[],fg:'#ffffff',width:4.3,height:5.3,pos:[-4.64,5.5,18],turn:Math.PI/2},
+  {name:'Human and AI',lines:[],sub:[],fg:'#ffffff',width:4.5,height:4.8,pos:[4.84,5.8,6],turn:-Math.PI/2},
   {name:'Systems that respond',lines:[],sub:[],fg:'#ffffff',width:8.8,height:3.2,pos:[0,3,-6.97],turn:0}
 ];
 
 export function cityCamera(camera,p,mobile){
   const travel=THREE.MathUtils.smoothstep(p,0,.88);
-  camera.position.set(.45*Math.sin(travel*Math.PI*2),1.72,29-travel*24);
-  // Eye height remains on the pavement. Only the gaze lifts toward the signs.
-  camera.lookAt(0,6.4+travel*1.6,-10);
-  camera.fov=mobile?76:66;camera.updateProjectionMatrix();camera.updateMatrixWorld(true);
+  camera.position.set(.32*Math.sin(travel*Math.PI*2),1.68,30-travel*24);
+  camera.lookAt(0,4.8+travel*1.7,-10);
+  camera.fov=mobile?72:58;camera.updateProjectionMatrix();camera.updateMatrixWorld(true);
 }
 
 export function createScrollCity(scene,renderer){
@@ -49,7 +48,7 @@ export function createScrollCity(scene,renderer){
   const V=(x,y,z)=>new THREE.Vector3(x,y,z);
 
   // The whole set is one intersection. Four façades frame the signs.
-  const blocks=[[-6.0,4.7,-4.8,6.0,9.4,4.0],[6.5,5.2,-7.0,6.8,10.4,4.4],[0,6.4,-11.2,5.2,12.8,4.4],[-10,7.8,-12,3.8,15.6,5],[9.5,8.6,-15,3.4,17.2,5],[-5,9.7,-19,3.6,19.4,4],[3,10.2,-22,4,20.4,4],[-10,8,19,5,16,7],[12,9,19,5,18,7],[-10,6,7,5,12,6],[12,7.5,7,5,15,6]];
+  const blocks=[[-6.0,4.7,-4.8,6.0,9.4,4.0],[6.5,5.2,-7.0,6.8,10.4,4.4],[0,6.4,-11.2,5.2,12.8,4.4],[-7.5,7.8,-12,4.8,15.6,5],[7.5,8.6,-15,4.8,17.2,5],[-5,9.7,-19,3.6,19.4,4],[3,10.2,-22,4,20.4,4],[-7.2,7,19,5,14,7],[7.4,8,19,5,16,7],[-7.2,6,7,5,12,6],[7.4,7.5,7,5,15,6]];
   const windows=[],buildings=[];
   blocks.forEach(([x,y,z,w,h,d],i)=>{
     const firstChild=world.children.length,firstWindow=windows.length;
@@ -98,18 +97,38 @@ export function createScrollCity(scene,renderer){
   for(const z of []){line(world,V(-7.5,13,z),V(9.5,13,z),.028,chrome);line(world,V(-7.5,12.85,z),V(9.5,12.85,z),.012,blue);}
   // Repeated pavement details establish human scale as the camera passes them.
   const treeMaterial=new THREE.MeshStandardMaterial({color:0x1d3b91,roughness:.9});
-  for(const side of [-1,1])for(const z of [17,9,0]){
-    const x=side*5.15;
-    box(world,1.45,.42,1.45,x,.28,z,dark);
-    line(world,V(x,.45,z),V(x,3.4,z),.09,chrome);
-    for(const [dx,dy,dz,s] of [[0,3.5,0,.85],[-.55,3.0,.12,.67],[.5,3.15,-.12,.72],[0,4.1,0,.57]]){
+  for(const side of [-1,1])for(const z of [12,-1]){
+    // The near pair sits closer to the curb so its canopy never crosses the sightline to a building sign.
+    const x=side*(z<0?4.55:6.25);
+    box(world,1.15,.34,1.15,x,.24,z,dark);
+    line(world,V(x,.38,z),V(x,2.55,z),.075,chrome);
+    for(const [dx,dy,dz,s] of [[0,2.6,0,.58],[-.38,2.3,.1,.43],[.36,2.42,-.1,.48],[0,3.02,0,.38]]){
       const canopy=new THREE.Mesh(new THREE.IcosahedronGeometry(s,2),treeMaterial);canopy.position.set(x+dx,dy,z+dz);world.add(canopy);
     }
-    const bx=side*6.5;
+    const bx=side*7.15;
     box(world,.7,.12,2.0,bx,.66,z+2,chrome);
     box(world,.12,.65,2.0,bx+side*.3,.98,z+2,dark);
     for(const offset of [-.65,.65])box(world,.55,.55,.08,bx,.34,z+2+offset,dark);
   }
+  // Short, readable messages turn the street into a concise design narrative.
+  function messageTexture(label,detail,invert=false){
+    const canvas=document.createElement('canvas');canvas.width=1536;canvas.height=448;const c=canvas.getContext('2d');
+    c.fillStyle=invert?'#ffffff':'#02040d';c.fillRect(0,0,canvas.width,canvas.height);
+    c.fillStyle=invert?'#07145b':'#ffffff';c.font='700 112px Arial';c.fillText(label,58,185);
+    c.font='500 38px Arial';c.fillText(detail,62,290);
+    const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;texture.anisotropy=Math.min(16,renderer.capabilities.getMaxAnisotropy());return texture;
+  }
+  [
+    [0,-6,6.7,-2.76,4.7,1.38,'RESEARCH','LISTEN FOR THE REAL PROBLEM',false],
+    [1,6.5,7.3,-4.76,5.1,1.48,'MAKE IT CLEAR','ONE DECISION AT A TIME',true],
+    [3,-7.5,10.7,-9.46,4.1,1.2,'ACCESS','DESIGN FOR MORE PEOPLE',true],
+    [4,7.5,11.7,-12.46,4.1,1.2,'SHIP','DESIGN · CODE · ITERATE',false],
+    [5,-5,13.0,-16.96,2.9,1.0,'ITERATE','TEST, LEARN, REFINE',false],
+    [6,3,13.5,-19.96,3.2,1.05,'IMPACT','MEASURED IN OUTCOMES',true]
+  ].forEach(([buildingIndex,x,y,z,w,h,label,detail,invert])=>{
+    const mesh=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({map:messageTexture(label,detail,invert),toneMapped:false}));
+    mesh.position.set(x,y,z);mesh.renderOrder=24;buildings[buildingIndex].add(mesh);
+  });
   for(let z=-8;z<28;z+=2){
     box(world,.045,.02,1.05,0,.012,z,white);
     for(const side of [-1,1])box(world,6,.012,.018,side*6,.12,z,chrome);
@@ -138,7 +157,7 @@ export function createScrollCity(scene,renderer){
     ctx.fillStyle=copy.fg;ctx.font=`700 ${font}px Arial`;ctx.textBaseline='alphabetic';
     const top=mobile&&index>0&&index<3?300:290;
     lines.forEach((line,i)=>ctx.fillText(line,50,top+i*font*1.03));
-    if(!mobile||index===0||index===3){ctx.font='48px Arial';copy.sub.forEach(()=>{});}
+    if(index===0){ctx.font='500 38px Arial';ctx.fillText(copy.sub[0],55,690);}
 
     const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=Math.min(16,renderer.capabilities.getMaxAnisotropy());return t;
   }
@@ -225,11 +244,11 @@ export function createScrollCity(scene,renderer){
     const [x,y,z,w,h,d]=blocks[buildingIndex],canvas=document.createElement('canvas');canvas.width=2048;canvas.height=3072;
     const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;texture.anisotropy=Math.min(16,renderer.capabilities.getMaxAnisotropy());
     const display=new THREE.Mesh(new THREE.PlaneGeometry(j===0?7:5.8,j===0?3.8:6.8),new THREE.MeshBasicMaterial({map:texture,transparent:true,depthWrite:true,toneMapped:false,clippingPlanes:[new THREE.Plane(V(0,1,0),0)]}));
-    display.renderOrder=30;display.position.set(x,h-4.2,z+d/2+.15);display.visible=false;buildings[buildingIndex].add(display);
+    display.renderOrder=30;display.position.set(x,h-4.2,z+d/2+.15);display.visible=true;buildings[buildingIndex].add(display);
     return{canvas,texture,kind:j+2};
   });
   // Background towers stay subordinate to the two principal displays.
-  const waveform=new THREE.Group();waveform.position.set(-7.37,4.5,5.5);waveform.rotation.y=Math.PI/2;buildings[10].add(waveform);
+  const waveform=new THREE.Group();waveform.position.set(-4.64,4.6,6.4);waveform.rotation.y=Math.PI/2;buildings[10].add(waveform);
   const waveShape=new THREE.Shape();waveShape.moveTo(-2.6,-.8);waveShape.lineTo(2.6,-.8);waveShape.absarc(2.6,0,.8,-Math.PI/2,Math.PI/2,false);waveShape.lineTo(-2.6,.8);waveShape.absarc(-2.6,0,.8,Math.PI/2,Math.PI*1.5,false);
   const waveBody=new THREE.Mesh(new THREE.ExtrudeGeometry(waveShape,{depth:.18,bevelEnabled:true,bevelSize:.06,bevelThickness:.04,bevelSegments:4,curveSegments:32}),new THREE.MeshPhysicalMaterial({color:0xf4f7ff,metalness:.32,roughness:.17,clearcoat:1}));waveform.add(waveBody);
   const waveBars=[];for(let i=0;i<27;i++){const bar=box(waveform,.065,.5,.06,-2.65+i*.155,0,.27,new THREE.MeshBasicMaterial({color:0x1334c9}));waveBars.push(bar);}
@@ -255,9 +274,9 @@ export function createScrollCity(scene,renderer){
     });
   }
   return{billboards,buildings,assetsReady,update(p,time,mobile){
-    layout(mobile);world.scale.x=mobile?.62:1;
+    layout(mobile);world.scale.x=mobile?.78:1;
     liquidNormal.offset.set(time*.000009,time*.000006);
-    spinner.scale.x=mobile?1/.62:1;spinner.rotation.y=time===0?0:time*.00035;
+    spinner.scale.x=mobile?1/.78:1;spinner.rotation.y=time===0?0:time*.00035;
     waveBars.forEach((bar,i)=>{bar.scale.y=time===0?1:.25+Math.abs(Math.sin(time*.003+i*.64))*1.85;});
     const phase=time===0?0:time*.00065, nextVisualFrame=(time===0?0:Math.floor(time/80))+visualRevision*10000000;
     if(nextVisualFrame!==visualFrame){
@@ -273,13 +292,13 @@ export function createScrollCity(scene,renderer){
     if(frame!==searchFrame){searchFrame=frame;const sign=billboards[3];for(const t of sign.textures)if(t){drawSearch(t.image,searchProgress);t.needsUpdate=true;}}
 
     buildings.forEach((group,i)=>{
-      const start=i>=8?(i<10?.01:.24):i===2?.32:.16+(i%3)*.07;
+      const start=i>=8?(i<10?-.08:.16):i===2?.42:.10+(i%3)*.055;
       const reveal=THREE.MathUtils.smoothstep(p,start,start+.22);
       group.position.y=-(1-reveal)*25;group.visible=reveal>.001;
     });
     billboards.forEach(({mount,panel,index,copy})=>{
-      const start=index===0?-.12:index===2?.34:.035;
-      const reveal=index===0?1:THREE.MathUtils.smoothstep(p,start,start+.16);
+      const start=index===0?.47:index===2?.23:.015;
+      const reveal=THREE.MathUtils.smoothstep(p,start,start+.14);
       panel.position.y=0;panel.rotation.x=0;panel.visible=reveal>.001;
       for(const phone of billboards[index].phones){
         phone.device.rotation.y=0;

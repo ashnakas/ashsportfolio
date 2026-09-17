@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ashna Kasireddy — The Listening Corner</title>
+<meta name="description" content="A little room for good ideas. Explore product design and interactive experiments by Ashna Kasireddy.">
+<link rel="icon" href="/favicon.svg"><link rel="stylesheet" href="/listening/style.css">
+<link rel="preload" as="image" href="/listening/room.png">
+</head>
+<body>
+<a class="skip" href="#work">Skip to selected work</a>
+<header class="masthead"><a class="wordmark" href="#">ASHNA KASIREDDY<span>PRODUCT DESIGNER</span></a><nav aria-label="Main navigation"><a href="#work">Work</a><button data-about>About</button><a href="mailto:akasireddy3@gatech.edu">Say hello ↗</a></nav></header>
+<main>
+<section class="corner" aria-label="Interactive listening corner">
+<div class="room-window"><div class="room" id="room">
+<img class="room-image" src="/listening/room.png" alt="A warm listening room with a green velvet chair, walnut turntable console, record shelves and a glowing equalizer." fetchpriority="high">
+<div class="room-shade"></div>
+<canvas class="equalizer" id="equalizer" aria-hidden="true"></canvas>
+<button class="turntable hotspot" data-play aria-label="Start the turntable"><span class="hotspot-dot">▶</span><span class="hotspot-label">Drop the needle</span></button>
+<button class="shelf hotspot" data-browse aria-label="Browse project records"><span class="hotspot-dot">↗</span><span class="hotspot-label">Browse the records</span></button>
+<button class="lamp hotspot" id="lamp" aria-label="Dim the room" aria-pressed="false"><span class="hotspot-dot">☼</span><span class="hotspot-label">Set the mood</span></button>
+</div></div>
+<div class="invitation" id="invitation"><p class="eyebrow">THE LISTENING CORNER · VOL. 01</p><h1>A little room<br>for good ideas.</h1><p class="intro-copy">Make yourself at home.</p><button class="start" data-play><span>▶</span> Drop the needle</button><p class="sound-note">Starts quietly. Sound is your choice.</p></div>
+<div class="room-caption" aria-hidden="true"><span>STAY CURIOUS.</span><span>TAKE A LOOK AROUND.</span></div>
+<section class="record-dock" id="record-dock" aria-label="Project records" hidden>
+<div class="dock-label"><span>PICK A RECORD</span><button id="close-dock" aria-label="Close project records">×</button></div>
+<div class="records">
+<button class="record recart" data-project="recart" aria-label="Select ReCart, product design and development"><span class="record-no">SIDE A / 01</span><strong>Re<span>Cart.</span></strong><span class="record-bottom">ONE SEARCH. MORE POSSIBILITY.</span></button>
+<button class="record pinwheels" data-project="pinwheels" aria-label="Select Pinwheels, discovery concept"><span class="record-no">SIDE B / 02</span><strong>Pin<br>wheels</strong><span class="record-bottom">FOLLOW THE IDEA.</span></button>
+</div>
+</section>
+<aside class="liner" id="liner" aria-label="Selected project details" hidden><button class="close" id="close-liner" aria-label="Close project details">×</button><p class="eyebrow" id="liner-category"></p><h2 id="liner-title"></h2><p id="liner-copy"></p><a class="case-link" id="liner-link" href="/recart">Open case study <span>↗</span></a></aside>
+<footer class="player"><button class="transport" data-play aria-label="Start the turntable" aria-pressed="false">▶</button><div class="playing-info"><span id="playing-label">THE LISTENING CORNER</span><strong id="playing-title">The room is yours.</strong></div><div class="mini-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><button class="sound" id="sound" aria-pressed="false">Sound off</button><button class="browse" data-browse>Browse records <span>↗</span></button></footer>
+<p class="sr-only" id="room-status" role="status"></p>
+</section>
+<section class="work" id="work" tabindex="-1"><div class="work-head"><p class="eyebrow">THE COLLECTION</p><h2>Good ideas,<br><em>put to work.</em></h2><p>Product decisions. Thoughtful interfaces.<br>A closer look at the making.</p></div><div class="work-grid">
+<a class="project-card" href="/recart"><div class="cover recart"><small>01 / PRODUCT DESIGN + DEVELOPMENT</small><strong>ReCart.</strong><span>4 → 1</span></div><div class="project-caption"><h3>ReCart</h3><span>↗</span></div><p>Bringing four resale marketplaces into one search.</p></a>
+<a class="project-card" href="/pinwheels"><div class="cover pinwheels"><small>02 / DISCOVERY CONCEPT</small><strong>Pinwheels</strong><span>Follow<br>the idea.</span></div><div class="project-caption"><h3>Pinwheels</h3><span>↗</span></div><p>Giving people control over where inspiration takes them.</p></a>
+</div><footer class="work-footer"><span>Thoughtfully made by Ashna.</span><a href="mailto:akasireddy3@gatech.edu">Let’s make something good ↗</a></footer></section>
+</main>
+<dialog id="about"><button class="close" id="close-about" aria-label="Close about">×</button><p class="eyebrow">BEHIND THE RECORDS</p><h2>Hi, I’m Ashna.</h2><p>I’m an AI-forward, product-minded UI/UX designer. I care about accessible experiences, intuitive interfaces, and making emerging technology useful for people.</p><p>This corner is a place to explore my work, follow an idea, and stay curious.</p><a href="mailto:akasireddy3@gatech.edu">Say hello ↗</a></dialog>
+<script src="/listening/room.js" defer></script>
+</body></html>
