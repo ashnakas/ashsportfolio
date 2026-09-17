@@ -4,6 +4,7 @@ import {createScrollCity,cityCamera} from './scroll-city.js';
 const section=document.querySelector('#journey'),container=document.querySelector('#canvas-container'),ui=document.querySelector('#scene-ui');
 const status=document.querySelector('#journey-status'),count=document.querySelector('#journey-count'),fill=document.querySelector('#progress-fill');
 const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const endCard=document.createElement('div');endCard.className='scene-end';endCard.innerHTML='<h2>Ashna Kasireddy</h2><p>Full stack · Human + AI</p>';ui.append(endCard);
 const clamp=THREE.MathUtils.clamp;
 let renderer,world,camera,raf,progress=0,target=0,last=0,ready=false;
 let lastWheel=-1000,destination=0,movingUntil=0,touch=null;
@@ -61,6 +62,7 @@ try{
     status.textContent=beat===3?'EXPLORE SELECTED WORK ↓':'SCROLL TO ENTER ↓';
     fill.style.transform=`scaleX(${Math.min(progress/.68,1)})`;
     document.querySelector('#enter-work').classList.toggle('visible',progress>.72);
+    endCard.classList.toggle('visible',progress>.76);
     const fade=1-clamp((scrollY-section.offsetHeight+innerHeight*.22)/(innerHeight*.22),0,1);container.style.opacity=fade;ui.style.opacity=fade;
     renderer.render(scene,camera);
   }

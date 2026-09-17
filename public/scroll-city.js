@@ -1,17 +1,17 @@
 import * as THREE from 'three';
 
 export const billboardCopy=[
-  {name:'Ashna Kasireddy',lines:['ASHNA','KASIREDDY'],sub:['PRODUCT DESIGNER'],fg:'#ffffff',width:5.0,height:3.4,pos:[0,10.8,-8.98],turn:0},
-  {name:'One clear action',lines:[],sub:[],fg:'#ffffff',width:5.8,height:6.8,pos:[-6,6.4,-2.77],turn:0},
-  {name:'Accessible by design',lines:[],sub:[],fg:'#ffffff',width:6.4,height:6.8,pos:[6.5,7,-4.77],turn:0},
+  {name:'Ashna Kasireddy',lines:['ASHNA','KASIREDDY'],sub:['FULL STACK'],fg:'#ffffff',width:5.0,height:3.4,pos:[0,8.8,-8.98],turn:0},
+  {name:'One clear action',lines:[],sub:[],fg:'#ffffff',width:5.0,height:5.8,pos:[-7.37,5.2,15.5],turn:Math.PI/2},
+  {name:'Human and AI',lines:[],sub:[],fg:'#ffffff',width:5.0,height:5.2,pos:[9.37,5.5,5.6],turn:-Math.PI/2},
   {name:'Systems that respond',lines:[],sub:[],fg:'#ffffff',width:8.8,height:3.2,pos:[0,3,-6.97],turn:0}
 ];
 
 export function cityCamera(camera,p,mobile){
   const travel=THREE.MathUtils.smoothstep(p,0,.88);
-  camera.position.set(.22*Math.sin(travel*Math.PI),1.72,25-travel*18);
+  camera.position.set(.45*Math.sin(travel*Math.PI*2),1.72,29-travel*24);
   // Eye height remains on the pavement. Only the gaze lifts toward the signs.
-  camera.lookAt(0,5.8+travel*3.6,-10);
+  camera.lookAt(0,6.4+travel*1.6,-10);
   camera.fov=mobile?76:66;camera.updateProjectionMatrix();camera.updateMatrixWorld(true);
 }
 
@@ -57,7 +57,7 @@ export function createScrollCity(scene,renderer){
     box(world,w+.25,.16,d+.25,x,h,z,chrome);
     box(world,w+.4,.22,d+.4,x,.35,z,chrome);
     for(let column=0;column<Math.floor(w/.52);column++)for(let row=0;row<Math.floor(h/.64);row++){
-      if(column%2!==0||row%2!==0)continue;
+      if(column%3!==0||row%3!==0)continue;
       windows.push([x-w/2+.32+column*.52,.9+row*.64,z+d/2+.012,.20,.34]);
     }
     for(const side of [-1,1])box(world,.035,h,.04,x+side*(w/2-.10),y,z+d/2+.025,chrome);
@@ -199,7 +199,7 @@ export function createScrollCity(scene,renderer){
     c.restore();c.strokeStyle='#f3f5ff';c.lineWidth=30;c.beginPath();c.arc(cx,cy,r,0,Math.PI*2);c.stroke();c.lineCap='round';c.beginPath();c.moveTo(795,535);c.lineTo(925,665);c.stroke();c.restore();
   }
   const billboards=billboardCopy.map((copy,index)=>{
-    const mount=new THREE.Group(),panel=new THREE.Group();mount.name='billboard-'+index;mount.add(panel);buildings[[2,0,1,7][index]].add(mount);
+    const mount=new THREE.Group(),panel=new THREE.Group();mount.name='billboard-'+index;mount.add(panel);buildings[[2,8,11,7][index]].add(mount);
     const shape=new THREE.Shape(),r=.045,s=.515;
     shape.moveTo(-s+r,-s);shape.lineTo(s-r,-s);shape.quadraticCurveTo(s,-s,s,-s+r);shape.lineTo(s,s-r);shape.quadraticCurveTo(s,s,s-r,s);shape.lineTo(-s+r,s);shape.quadraticCurveTo(-s,s,-s,s-r);shape.lineTo(-s,-s+r);shape.quadraticCurveTo(-s,-s,-s+r,-s);
     const face=new THREE.Mesh(new THREE.PlaneGeometry(1,1),new THREE.MeshBasicMaterial({map:texture(copy,index,false),transparent:true,depthWrite:false,fog:false,toneMapped:false}));face.position.z=.015;face.renderOrder=12+index;panel.add(face);
@@ -229,7 +229,7 @@ export function createScrollCity(scene,renderer){
     return{canvas,texture,kind:j+2};
   });
   // Background towers stay subordinate to the two principal displays.
-  const waveform=new THREE.Group();waveform.position.set(0,3,-6.7);buildings[7].add(waveform);
+  const waveform=new THREE.Group();waveform.position.set(-7.37,4.5,5.5);waveform.rotation.y=Math.PI/2;buildings[10].add(waveform);
   const waveShape=new THREE.Shape();waveShape.moveTo(-2.6,-.8);waveShape.lineTo(2.6,-.8);waveShape.absarc(2.6,0,.8,-Math.PI/2,Math.PI/2,false);waveShape.lineTo(-2.6,.8);waveShape.absarc(-2.6,0,.8,Math.PI/2,Math.PI*1.5,false);
   const waveBody=new THREE.Mesh(new THREE.ExtrudeGeometry(waveShape,{depth:.18,bevelEnabled:true,bevelSize:.06,bevelThickness:.04,bevelSegments:4,curveSegments:32}),new THREE.MeshPhysicalMaterial({color:0xf4f7ff,metalness:.32,roughness:.17,clearcoat:1}));waveform.add(waveBody);
   const waveBars=[];for(let i=0;i<27;i++){const bar=box(waveform,.065,.5,.06,-2.65+i*.155,0,.27,new THREE.MeshBasicMaterial({color:0x1334c9}));waveBars.push(bar);}
@@ -273,8 +273,8 @@ export function createScrollCity(scene,renderer){
     if(frame!==searchFrame){searchFrame=frame;const sign=billboards[3];for(const t of sign.textures)if(t){drawSearch(t.image,searchProgress);t.needsUpdate=true;}}
 
     buildings.forEach((group,i)=>{
-      const start=i===2?-.2:i>=8?-.12:i===0||i===7?.10:i===1?.34:.16+(i%3)*.07;
-      const reveal=i===2||i>=8?1:THREE.MathUtils.smoothstep(p,start,start+.20);
+      const start=i>=8?(i<10?.01:.24):i===2?.32:.16+(i%3)*.07;
+      const reveal=THREE.MathUtils.smoothstep(p,start,start+.22);
       group.position.y=-(1-reveal)*25;group.visible=reveal>.001;
     });
     billboards.forEach(({mount,panel,index,copy})=>{

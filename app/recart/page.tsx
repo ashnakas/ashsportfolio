@@ -176,7 +176,7 @@ export default function ReCartPage() {
         <Link href="/#work">
           <ArrowLeft size={14} /> Back to all work
         </Link>
-        <small>SHOWAbility and CNN Academy case studies — coming soon.</small>
+        <small>Explore more projects, research, and experience design.</small>
       </footer>
     </main>
   );
