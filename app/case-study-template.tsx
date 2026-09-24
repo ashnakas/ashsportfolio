@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import Image from 'next/image';
 import CaseStudyNav from './case-study-nav';
 import './case-study.css';
@@ -33,7 +32,7 @@ function ProjectVisual({project,scene='hero'}:{project:ProjectKey;scene?:'hero'|
 
 export default function CaseStudyTemplate({project}:{project:Project}){
   return <main className={`case-study ${project.key}-case`}>
-    <nav className="case-top"><Link href="/#work">← Selected work</Link><Link href="/">Ashna Kasireddy</Link><a href="mailto:akasireddy3@gatech.edu">Contact ↗</a></nav>
+    <nav className="case-top"><a href="/#work">← Selected work</a><a href="/">Ashna Kasireddy</a><a href="mailto:akasireddy3@gatech.edu">Contact ↗</a></nav>
     <CaseStudyNav stages={stages}/>
     <header className="case-hero">
       <p>{project.eyebrow} · {project.timeline}</p><h1>{project.title}</h1><h2>{project.subtitle}</h2><div className="hero-bottom"><p>{project.summary}</p>{project.prototype&&<a className="prototype-link" href={project.prototype} target="_blank" rel="noreferrer">Open interactive prototype ↗</a>}</div>
@@ -44,6 +43,6 @@ export default function CaseStudyTemplate({project}:{project:Project}){
     <section id="process" className="case-section process-section"><div className="section-label">03 / Process</div><div><h3>From evidence to direction.</h3><ol>{project.process.map((step,i)=><li key={step}><span>0{i+1}</span><p>{step}</p></li>)}</ol></div></section>
     <section id="design" className="case-section design-section"><div className="section-label">04 / Design</div><div><h3>Three decisions shaped the system.</h3><div className="decision-cards">{project.decisions.map((d,i)=><article key={d.title}><span>0{i+1}</span><h4>{d.title}</h4><p>{d.text}</p></article>)}</div><ProjectVisual project={project.key} scene="detail"/>{project.key==='pinwheels'&&<figure className="case-board"><Image src="/pinwheels/case-study-board.png" alt="Pinwheels product concept board showing screens, flow, and prototype findings" width={1076} height={1620}/><figcaption>Complete interaction model and prototype flow.</figcaption></figure>}</div></section>
     <section id="outcome" className="case-section outcome-section"><div className="section-label">05 / Outcome</div><div><h3>{project.outcome}</h3><div className="result-row">{project.results.map(result=><span key={result}>{result}</span>)}</div><div className="reflection"><b>Reflection</b><p>{project.reflection}</p></div></div></section>
-    <footer className="case-next"><span>Next case study</span><Link href={project.next.href}>{project.next.name} ↗</Link><Link href="/#work">All selected work</Link></footer>
+    <footer className="case-next"><span>Next case study</span><a href={project.next.href}>{project.next.name} ↗</a><a href="/#work">All selected work</a></footer>
   </main>;
 }
