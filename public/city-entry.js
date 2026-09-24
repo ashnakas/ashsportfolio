@@ -10,7 +10,7 @@ let lastWheel=-1000,destination=0,movingUntil=0,touch=null;
 const pointer=new THREE.Vector2(),parallax=new THREE.Vector2();
 const range=()=>Math.max(1,section.offsetHeight-innerHeight);
 // Three deliberate gestures reveal the intro; a fourth takes the visitor into the work.
-const stops=()=>[0,range()*.25,range()*.55,range()*.85];
+const stops=()=>[0,range()*.2,range()*.4,range()*.62];
 const inside=()=>ready&&scrollY<section.offsetTop+section.offsetHeight-2;
 function scrollState(){target=clamp(scrollY/range(),0,1);document.body.classList.toggle('in-work',scrollY>=section.offsetHeight-innerHeight*.05);}
 function advance(direction){
@@ -22,12 +22,11 @@ function advance(direction){
 }
 function fail(error){console.error('Scroll City could not start:',error);clearTimeout(window.cityTimer);window.cityFailed();}
 try{
-  // MSAA and highp shading are both expensive on mobile GPUs; drop both there rather than tune
-  // fidelity no one on a phone can tell apart from the cheaper path.
+  // Preserve crisp type and edges on both screen sizes; cap resolution for mobile memory.
   const mobileGpu=innerWidth<768;
-  renderer=new THREE.WebGLRenderer({antialias:!mobileGpu,powerPreference:'high-performance',precision:mobileGpu?'mediump':'highp'});
+  renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance',precision:'highp'});
   renderer.localClippingEnabled=true;
-  renderer.setPixelRatio(Math.min(devicePixelRatio,mobileGpu?1.5:2.5));renderer.setSize(innerWidth,innerHeight);
+  renderer.setPixelRatio(Math.min(devicePixelRatio,mobileGpu?2:2.5));renderer.setSize(innerWidth,innerHeight);
   renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;container.append(renderer.domElement);
   const scene=new THREE.Scene();camera=new THREE.PerspectiveCamera(42,innerWidth/innerHeight,.1,180);
   world=createScrollCity(scene,renderer);ready=true;window.cityLoadProgress?.(55);
@@ -49,7 +48,7 @@ try{
   window.addEventListener('touchcancel',()=>{touch=null;},{passive:true});
   window.addEventListener('keydown',event=>{if(!inside()||event.target.closest('a,button,input,textarea,select,[contenteditable]'))return;const down=['ArrowDown','PageDown',' '].includes(event.key),up=['ArrowUp','PageUp'].includes(event.key);if(down||up){event.preventDefault();if(!event.repeat)advance(up||event.shiftKey?-1:1);}});
   window.addEventListener('pointermove',event=>{pointer.set(event.clientX/innerWidth*2-1,1-event.clientY/innerHeight*2);},{passive:true});
-  window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;renderer.setPixelRatio(Math.min(devicePixelRatio,innerWidth<768?1.5:2.5));renderer.setSize(innerWidth,innerHeight);scrollState();});
+  window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;renderer.setPixelRatio(Math.min(devicePixelRatio,innerWidth<768?2:2.5));renderer.setSize(innerWidth,innerHeight);scrollState();});
   renderer.domElement.addEventListener('webglcontextlost',event=>{event.preventDefault();ready=false;cancelAnimationFrame(raf);fail(new Error('Graphics context lost'));});
   renderer.domElement.addEventListener('webglcontextrestored',()=>location.reload());
   scrollState();progress=target;
@@ -59,11 +58,11 @@ try{
     const mobile=innerWidth<768;cityCamera(camera,progress,mobile);
     if(!reduced&&!mobile){parallax.lerp(pointer,.07);camera.rotation.y-=parallax.x*.006;camera.rotation.x+=parallax.y*.004;}
     world.update(progress,reduced?0:now,mobile);
-    const title=document.querySelector('#intro-title');title.style.opacity=1-clamp(progress/.20,0,1);title.style.visibility=progress<.20?'visible':'hidden';
-    const beat=progress<.20?0:progress<.45?1:progress<.72?2:3;count.textContent='0'+beat+' / 03';
+    const title=document.querySelector('#intro-title');title.style.opacity=1-clamp(progress/.13,0,1);title.style.visibility=progress<.13?'visible':'hidden';
+    const beat=progress<.13?0:progress<.3?1:progress<.55?2:3;count.textContent='0'+beat+' / 03';
     status.textContent=beat===3?'EXPLORE SELECTED WORK ↓':'SCROLL TO ENTER ↓';
-    fill.style.transform=`scaleX(${Math.min(progress/.68,1)})`;
-    document.querySelector('#enter-work').classList.toggle('visible',progress>.72);
+    fill.style.transform=`scaleX(${Math.min(progress/.5,1)})`;
+    document.querySelector('#enter-work').classList.toggle('visible',progress>.55);
     const fade=1-clamp((scrollY-section.offsetHeight+innerHeight*.22)/(innerHeight*.22),0,1);container.style.opacity=fade;ui.style.opacity=fade;
     renderer.render(scene,camera);
   }

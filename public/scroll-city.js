@@ -8,44 +8,27 @@ export const billboardCopy=[
 ];
 
 export function cityCamera(camera,p,mobile){
-  const travel=THREE.MathUtils.smoothstep(p,0,.88);
-  camera.position.set(.32*Math.sin(travel*Math.PI*2),1.68,30-travel*24);
-  camera.lookAt(0,4.8+travel*1.7,-10);
-  camera.fov=mobile?72:58;camera.updateProjectionMatrix();camera.updateMatrixWorld(true);
+  const travel=THREE.MathUtils.smoothstep(p,0,.62);
+  camera.position.set(0,1.72,34-travel*(mobile?24:27));
+  camera.lookAt(0,4.4+travel*2.1,-10);
+  camera.fov=mobile?76:58;camera.updateProjectionMatrix();camera.updateMatrixWorld(true);
 }
 
 export function createScrollCity(scene,renderer){
-  const world=new THREE.Group();scene.add(world);scene.background=new THREE.Color('#102fbe');scene.fog=new THREE.FogExp2('#183aa9',.008);
-  const sky=new THREE.Mesh(new THREE.SphereGeometry(140,48,32),new THREE.ShaderMaterial({side:THREE.BackSide,depthWrite:false,uniforms:{},vertexShader:'varying vec3 vPosition; void main(){vPosition=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',fragmentShader:'varying vec3 vPosition; void main(){float h=normalize(vPosition).y;gl_FragColor=vec4(mix(vec3(.02,.06,.28),vec3(.12,.27,.92),smoothstep(-.25,1.0,h)),1.0);}'}));scene.add(sky);
-  const chrome=new THREE.MeshStandardMaterial({color:0xe8efff,metalness:.9,roughness:.17});
-  const building=new THREE.MeshStandardMaterial({color:0xf7f9ff,metalness:.08,roughness:.42});
-  const secondary=new THREE.MeshStandardMaterial({color:0xcdd9ff,metalness:.18,roughness:.32});
-  const dark=new THREE.MeshStandardMaterial({color:0x080d18,metalness:.35,roughness:.28});
+  const world=new THREE.Group();scene.add(world);scene.background=new THREE.Color('#183fe5');
+  // Matte throughout: no metalness, no clearcoat, no reflection environment. Flat, graphic, edged
+  // surfaces instead of the glossy PBR look — closer to a printed poster than a rendered material.
+  const chrome=new THREE.MeshStandardMaterial({color:0xe8efff,metalness:0,roughness:.85});
+  const building=new THREE.MeshStandardMaterial({color:0xf7f9ff,metalness:0,roughness:.85});
+  const secondary=new THREE.MeshStandardMaterial({color:0xcdd9ff,metalness:0,roughness:.85});
+  const dark=new THREE.MeshStandardMaterial({color:0x080d18,metalness:0,roughness:.9});
   const blue=new THREE.MeshBasicMaterial({color:0x3158ff,toneMapped:false});
   const white=new THREE.MeshBasicMaterial({color:0xffffff,toneMapped:false});
-  const glass=new THREE.MeshPhysicalMaterial({color:0xe9f0ff,metalness:.08,roughness:.035,transmission:.88,thickness:.25,ior:1.42,clearcoat:1,clearcoatRoughness:.02,attenuationColor:0x3d62ff,attenuationDistance:5});
-  // Very shallow flowing normals bend reflections without distorting the typography.
-  const normals=new Uint8Array(96*96*4);
-  for(let y=0;y<96;y++)for(let x=0;x<96;x++){
-    const u=x/96*Math.PI*2,v=y/96*Math.PI*2,n=(y*96+x)*4;
-    normals[n]=128+Math.round(44*Math.cos(u+v)+20*Math.sin(u*2-v));
-    normals[n+1]=128+Math.round(40*Math.sin(v)+18*Math.cos(u-v*2));normals[n+2]=245;normals[n+3]=255;
-  }
-  const liquidNormal=new THREE.DataTexture(normals,96,96,THREE.RGBAFormat);liquidNormal.wrapS=liquidNormal.wrapT=THREE.RepeatWrapping;liquidNormal.magFilter=liquidNormal.minFilter=THREE.LinearFilter;liquidNormal.needsUpdate=true;
-  glass.normalMap=liquidNormal;glass.normalScale.set(.07,.07);
-  // One deliberately rare accent, pulled straight from the Pinwheels case-study red, marks exactly
-  // two moments in the walk: the climactic sign and the globe's halo. Everywhere else stays disciplined.
-  const accent=new THREE.MeshStandardMaterial({color:0xe60023,metalness:.35,roughness:.22,emissive:0x3a0006,emissiveIntensity:.55});
-  const asphalt=new THREE.MeshPhysicalMaterial({color:0x080f28,metalness:.72,roughness:.17,clearcoat:1,clearcoatRoughness:.08});
-  scene.add(new THREE.HemisphereLight(0xb9ccff,0x02030a,1.9));
-  const sun=new THREE.DirectionalLight(0xffffff,2.8);sun.position.set(-8,22,15);scene.add(sun);
-  const rim=new THREE.DirectionalLight(0x6b8cff,3.2);rim.position.set(15,7,-10);scene.add(rim);
-  for(const [x,z,color] of [[-4,12,0xffffff],[5,4,0x3158ff],[-3,-3,0xdde6ff]]){const glow=new THREE.PointLight(color,30,22,2);glow.position.set(x,2,z);scene.add(glow);}
-  const env=new THREE.Scene();env.background=new THREE.Color('#1235b8');
-  for(const [x,y,z,color] of [[0,12,5,0xffffff],[-10,3,0,0x3158ff],[10,5,-6,0xffffff]]){
-    const m=new THREE.Mesh(new THREE.PlaneGeometry(15,20),new THREE.MeshBasicMaterial({color,side:THREE.DoubleSide}));m.position.set(x,y,z);m.lookAt(0,0,0);env.add(m);
-  }
-  const pmrem=new THREE.PMREMGenerator(renderer),reflection=pmrem.fromScene(env,.04);scene.environment=reflection.texture;pmrem.dispose();env.traverse(o=>{o.geometry?.dispose();o.material?.dispose();});
+  const asphalt=new THREE.MeshStandardMaterial({color:0x080f28,metalness:0,roughness:.95});
+  scene.add(new THREE.AmbientLight(0xffffff,1.5));
+  const sun=new THREE.DirectionalLight(0xffffff,1.7);sun.position.set(-8,22,15);scene.add(sun);
+  // No reflection environment: with everything matte (metalness 0), nothing needs one to read
+  // correctly, and skipping it removes a render-to-texture pass the old chrome/glass relied on.
   function box(parent,w,h,d,x,y,z,material=building){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material);m.position.set(x,y,z);parent.add(m);return m;}
   function line(parent,a,b,r=.018,material=white){const delta=new THREE.Vector3().subVectors(b,a),m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,delta.length(),6),material);m.position.copy(a).add(b).multiplyScalar(.5);m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),delta.normalize());parent.add(m);return m;}
   const V=(x,y,z)=>new THREE.Vector3(x,y,z);
@@ -59,14 +42,14 @@ export function createScrollCity(scene,renderer){
     box(world,w+.25,.16,d+.25,x,h,z,chrome);
     box(world,w+.4,.22,d+.4,x,.35,z,chrome);
     for(let column=0;column<Math.floor(w/.52);column++)for(let row=0;row<Math.floor(h/.64);row++){
-      if(column%3!==0||row%3!==0)continue;
+      if(column%4!==0||row%4!==0)continue;
       windows.push([x-w/2+.32+column*.52,.9+row*.64,z+d/2+.012,.20,.34]);
     }
     for(const side of [-1,1])box(world,.035,h,.04,x+side*(w/2-.10),y,z+d/2+.025,chrome);
     if(i<3){box(world,w-.5,1.45,.10,x,1.15,z+d/2+.02,dark);for(let j=0;j<4;j++)box(world,.035,1.45,.12,x-w/2+.6+j*(w-1.2)/3,1.15,z+d/2+.08,chrome);}
     if(i>=7){
       const side=x<0?1:-1,inner=x+side*w/2;
-      for(let row=0;row<Math.floor(h/.7);row++)for(let col=0;col<Math.floor(d/.6);col++)if((row+col)%4!==0)windows.push([inner+side*.02,.8+row*.7,z-d/2+.35+col*.6,.25,.35,side*Math.PI/2]);
+      for(let row=0;row<Math.floor(h/.7);row++)for(let col=0;col<Math.floor(d/.6);col++)if(row%4===0&&col%3===0)windows.push([inner+side*.02,.8+row*.7,z-d/2+.35+col*.6,.22,.45,side*Math.PI/2]);
       for(const edgeZ of [z-d/2+.1,z+d/2-.1])box(world,.045,h,.045,inner+side*.04,y,edgeZ,side>0?blue:white);
       for(const floorY of [2.5])box(world,.12,.035,d,inner+side*.08,floorY,z,side>0?blue:white);
       box(world,.06,1.8,d-.6,inner+side*.06,1.2,z,asphalt);
@@ -80,38 +63,20 @@ export function createScrollCity(scene,renderer){
       box(world,1.15,.14,d+.15,inner+side*.5,2.9,z,dark);
       box(world,.035,.10,d+.15,inner+side*1.08,2.87,z,white);
     }
-    box(world,.10,1.2,.10,x+.6,h+.6,z,chrome);box(world,1.3,.035,.04,x+.6,h+1,z,white);
     const group=new THREE.Group();group.name='rising-building-'+i;
     for(const child of world.children.slice(firstChild))group.add(child);
     const panes=windows.slice(firstWindow),wm=new THREE.InstancedMesh(new THREE.PlaneGeometry(1,1),new THREE.MeshBasicMaterial({color:0x2347e5,transparent:true,opacity:.32}),panes.length),matrix=new THREE.Matrix4();
     panes.forEach(([px,py,pz,pw,ph,turn=0],j)=>{matrix.compose(V(px,py,pz),new THREE.Quaternion().setFromAxisAngle(V(0,1,0),turn),V(pw,ph,1));wm.setMatrixAt(j,matrix);});group.add(wm);world.add(group);buildings.push(group);
 
   });
-  // A shallow reflective street, curb edges and crossing anchor the low camera.
+  // Matte street, curb edges and crossing anchor the low camera.
   box(world,50,.15,85,0,-.15,3,asphalt);
   box(world,7,.13,60,-6.5,.04,7,secondary);box(world,7,.13,60,6.5,.04,7,secondary);
   for(let i=0;i<9;i++)box(world,.46,.012,3.0,-3.0+i*.75,.008,5.5,i%2?chrome:white);
   for(let i=0;i<9;i++)box(world,.46,.012,2.4,-3.0+i*.75,.008,21,i%2?chrome:white);
-  for(let i=0;i<0;i++)box(world,.04,.012,1.4,0,.009,27-i*2.5,white);
   for(const side of [-1,1]){
     box(world,.045,.02,48,side*3,.12,7,side<0?blue:white);
-    for(const z of [24,19,2,-5]){line(world,V(side*4.5,.1,z),V(side*4.5,3.4,z),.035,chrome);line(world,V(side*4.5,3.4,z),V(side*3.9,3.4,z),.03,chrome);box(world,.65,.055,.16,side*4.15,3.36,z,white);}
-  }
-  for(const z of []){line(world,V(-7.5,13,z),V(9.5,13,z),.028,chrome);line(world,V(-7.5,12.85,z),V(9.5,12.85,z),.012,blue);}
-  // Repeated pavement details establish human scale as the camera passes them.
-  const treeMaterial=new THREE.MeshStandardMaterial({color:0x1d3b91,roughness:.9});
-  for(const side of [-1,1])for(const z of [12,-1]){
-    // The near pair sits closer to the curb so its canopy never crosses the sightline to a building sign.
-    const x=side*(z<0?4.55:6.25);
-    box(world,1.15,.34,1.15,x,.24,z,dark);
-    line(world,V(x,.38,z),V(x,2.55,z),.075,chrome);
-    for(const [dx,dy,dz,s] of [[0,2.6,0,.58],[-.38,2.3,.1,.43],[.36,2.42,-.1,.48],[0,3.02,0,.38]]){
-      const canopy=new THREE.Mesh(new THREE.IcosahedronGeometry(s,2),treeMaterial);canopy.position.set(x+dx,dy,z+dz);world.add(canopy);
-    }
-    const bx=side*7.15;
-    box(world,.7,.12,2.0,bx,.66,z+2,chrome);
-    box(world,.12,.65,2.0,bx+side*.3,.98,z+2,dark);
-    for(const offset of [-.65,.65])box(world,.55,.55,.08,bx,.34,z+2+offset,dark);
+    for(const z of [25]){line(world,V(side*5.9,.1,z),V(side*5.9,3.4,z),.035,chrome);line(world,V(side*5.9,3.4,z),V(side*5.3,3.4,z),.03,chrome);box(world,.65,.055,.16,side*5.55,3.36,z,white);}
   }
   // Short, readable messages turn the street into a concise design narrative.
   function messageTexture(label,detail,invert=false){
@@ -122,27 +87,16 @@ export function createScrollCity(scene,renderer){
     const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;texture.anisotropy=Math.min(16,renderer.capabilities.getMaxAnisotropy());return texture;
   }
   [
-    [0,-6,6.7,-2.76,4.7,1.38,'RESEARCH','LISTEN FOR THE REAL PROBLEM',false],
-    [1,6.5,7.3,-4.76,5.1,1.48,'MAKE IT CLEAR','ONE DECISION AT A TIME',true],
-    [3,-7.5,10.7,-9.46,4.1,1.2,'ACCESS','DESIGN FOR MORE PEOPLE',true],
-    [4,7.5,11.7,-12.46,4.1,1.2,'SHIP','DESIGN · CODE · ITERATE',false],
-    [5,-5,13.0,-16.96,2.9,1.0,'ITERATE','TEST, LEARN, REFINE',false],
-    [6,3,13.5,-19.96,3.2,1.05,'IMPACT','MEASURED IN OUTCOMES',true]
+    [0,-6,7.1,-2.76,4.7,1.38,'DESIGN','FOR PEOPLE.',false],
+    [1,6.5,7.8,-4.76,5.1,1.48,'BUILD','WITH INTENTION.',true]
   ].forEach(([buildingIndex,x,y,z,w,h,label,detail,invert])=>{
-    const hero=label==='SHIP';
-    // A thin chrome-edged sign box gives every plaque real depth instead of a flat decal.
-    box(buildings[buildingIndex],w+.16,h+.16,.09,x,y,z-.07,hero?accent:dark);
-    box(buildings[buildingIndex],w+.28,h+.28,.03,x,y,z-.12,chrome);
+    // A crisp white edge (flat, unlit — always pure white regardless of light) gives every plaque
+    // a hard graphic border instead of a shaded chrome bevel.
+    box(buildings[buildingIndex],w+.16,h+.16,.09,x,y,z-.07,dark);
+    box(buildings[buildingIndex],w+.28,h+.28,.03,x,y,z-.12,white);
     const mesh=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({map:messageTexture(label,detail,invert),toneMapped:false}));
     mesh.position.set(x,y,z);mesh.renderOrder=24;buildings[buildingIndex].add(mesh);
-    if(hero){
-      // The culminating sign in the process arc gets a glossy glass-look cover instead of a printed
-      // face. Plain opacity + clearcoat reads as glass without `transmission`, which forces an extra
-      // full-scene render pass per frame — too costly for mobile GPUs for what is a small detail.
-      const coverMaterial=new THREE.MeshPhysicalMaterial({color:0xdfe7ff,metalness:.05,roughness:.08,transparent:true,opacity:.3,clearcoat:1,clearcoatRoughness:.06});
-      const cover=new THREE.Mesh(new THREE.PlaneGeometry(w+.08,h+.08),coverMaterial);
-      cover.position.set(x,y,z+.03);cover.renderOrder=25;buildings[buildingIndex].add(cover);
-    }
+
   });
   // Street-level signage — small, factual, human-scale — sits opposite the big process words above.
   // Same street, two registers: the skyline speaks in ideas, the storefronts speak in specifics.
@@ -150,18 +104,18 @@ export function createScrollCity(scene,renderer){
     const canvas=document.createElement('canvas');canvas.width=1024;canvas.height=280;const c=canvas.getContext('2d');
     c.fillStyle='#f4f6ff';c.fillRect(0,0,canvas.width,canvas.height);
     c.fillStyle='#050912';c.font='700 60px Arial';c.fillText(label,42,112);
-    c.fillStyle='#3d4a72';c.font='500 34px monospace';c.fillText(detail,46,192);
+    c.fillStyle='#34383f';c.font='500 38px Arial';c.fillText(detail,46,192,930);
     const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;texture.anisotropy=Math.min(16,renderer.capabilities.getMaxAnisotropy());return texture;
   }
   [
-    [7,-7.2,19,1,'GEORGIA TECH','B.S. COMPUTATIONAL MEDIA'],
-    [8,7.4,19,-1,'+42% ENGAGEMENT','SHOWABILITY REDESIGN'],
-    [9,-7.2,7,1,'REACT · PYTHON','FIGMA · SQL'],
-    [10,7.4,7,-1,'50K+ EVENTS MODELED','OPSLENS']
+    [7,-7.2,19,1,'RECART','ONE SEARCH. MORE POSSIBILITIES.'],
+    [8,7.4,19,-1,'RESEARCH','LISTEN. FIND THE PATTERN.'],
+    [9,-7.2,7,1,'SHOWABILITY','ACCESS STARTS HERE.'],
+    [10,7.4,7,-1,'SEATSCORE','HELP PEOPLE DECIDE.']
   ].forEach(([buildingIndex,x,z,side,label,detail])=>{
     const inner=x+side*2.5,px=inner+side*.16;
     box(buildings[buildingIndex],.07,.62,2.5,px,2.62,z,dark);
-    box(buildings[buildingIndex],.02,.72,2.68,px-side*.02,2.62,z,chrome);
+    box(buildings[buildingIndex],.02,.72,2.68,px-side*.02,2.62,z,white);
     const plate=new THREE.Mesh(new THREE.PlaneGeometry(2.3,.5),new THREE.MeshBasicMaterial({map:plateTexture(label,detail),toneMapped:false}));
     plate.position.set(px+side*.045,2.62,z);plate.rotation.y=side*Math.PI/2;plate.renderOrder=24;
     buildings[buildingIndex].add(plate);
@@ -174,29 +128,30 @@ export function createScrollCity(scene,renderer){
   box(podium,6.4,4.8,2,0,2.4,-8,building);
   box(podium,6.6,.15,2.2,0,4.8,-8,chrome);
   // A running news ticker under the podium screen gives the architecture a Times Square silhouette.
-  // Baking N whole copies of the unit string onto a canvas exactly N units wide guarantees the
-  // repeat tiles with no seam, so the offset animation in update() can scroll it forever.
+  // RepeatWrapping already tiles a single copy edge-to-edge with no seam — baking extra copies
+  // onto the canvas was pure waste and, at this string length, blew past the GPU's max texture
+  // size (WebGLRenderer silently downscaled it, corrupting the frame). One copy, width-clamped.
   function tickerTexture(text){
     const probe=document.createElement('canvas').getContext('2d');probe.font='700 52px monospace';
-    const unit=text+'     ·     ',unitWidth=Math.ceil(probe.measureText(unit).width),repeats=8;
-    const canvas=document.createElement('canvas');canvas.width=unitWidth*repeats;canvas.height=110;
+    const unit=text+'     ·     ',unitWidth=Math.min(8192,Math.ceil(probe.measureText(unit).width));
+    const canvas=document.createElement('canvas');canvas.width=unitWidth;canvas.height=110;
     const c=canvas.getContext('2d');c.fillStyle='#02040d';c.fillRect(0,0,canvas.width,canvas.height);
     c.fillStyle='#ffffff';c.font='700 52px monospace';c.textBaseline='middle';
-    for(let i=0;i<repeats;i++)c.fillText(unit,i*unitWidth,58);
+    c.fillText(unit,0,58);
     const t=new THREE.CanvasTexture(canvas);t.colorSpace=THREE.SRGBColorSpace;
-    t.wrapS=THREE.RepeatWrapping;t.wrapT=THREE.ClampToEdgeWrapping;t.repeat.set(1/repeats,1);
+    t.wrapS=THREE.RepeatWrapping;t.wrapT=THREE.ClampToEdgeWrapping;
     return t;
   }
-  const tickerMap=tickerTexture('SELECTED WORK   ·   FULL STACK · PRODUCT · AI   ·   GEORGIA TECH — HCI   ·   REACT · PYTHON · FIGMA   ·   ASHNA KASIREDDY');
+  const tickerMap=tickerTexture('RESEARCH   /   DESIGN   /   BUILD');
   const ticker=new THREE.Mesh(new THREE.PlaneGeometry(6.0,.42),new THREE.MeshBasicMaterial({map:tickerMap,toneMapped:false}));
-  ticker.position.set(0,1.15,-6.97);ticker.renderOrder=24;podium.add(ticker);
+  ticker.position.set(0,3.7,-6.97);ticker.renderOrder=24;podium.add(ticker);
   buildings.forEach(group=>group.traverse(object=>{if(object.material)object.material.clippingPlanes=[new THREE.Plane(V(0,1,0),0)];}));
   function texture(copy,index,mobile){
     const c=document.createElement('canvas');c.width=2048;c.height=mobile&&index>0&&index<3?1672:1296;
     const ctx=c.getContext('2d'),h=c.height;
     ctx.scale(c.width/1200,c.height/760);
     if(index===0){ctx.fillStyle='#02040d';ctx.fillRect(0,0,1200,760);}
-    ctx.shadowColor='rgba(0,5,22,.6)';ctx.shadowBlur=8;
+    ctx.shadowBlur=0;
     ctx.fillStyle=copy.fg;ctx.font='30px monospace';ctx.fillText('',55,75);
 
     let lines=copy.lines,font=index===0?190:100;
@@ -204,7 +159,7 @@ export function createScrollCity(scene,renderer){
     if(mobile&&index===2){lines=['HUMAN','NEEDS.','AI','POSSIBILITIES.'];font=128;}
     ctx.fillStyle=copy.fg;ctx.font=`700 ${font}px Arial`;ctx.textBaseline='alphabetic';
     const top=mobile&&index>0&&index<3?300:290;
-    lines.forEach((line,i)=>ctx.fillText(line,50,top+i*font*1.03));
+    lines.forEach((line,i)=>ctx.fillText(line,50,top+i*font*1.03,1100));
     if(index===0){ctx.font='500 38px Arial';ctx.fillText(copy.sub[0],55,690);}
 
     const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=Math.min(16,renderer.capabilities.getMaxAnisotropy());return t;
@@ -230,28 +185,44 @@ export function createScrollCity(scene,renderer){
     const rect=(x,y,w,h,color,r=24)=>{c.fillStyle=color;c.beginPath();c.roundRect(x,y,w,h,r);c.fill();};
     const text=(t,x,y,size,color='#ffffff')=>{c.fillStyle=color;c.font=`700 ${size}px Arial`;c.fillText(t,x,y);};
     if(kind===0){
-      // One action, one outcome: a phone that reads immediately from a distance.
-      rect(0,0,600,900,'#02040d');
-      c.strokeStyle='#ffffff';c.lineWidth=5;c.strokeRect(34,70,532,570);
-      c.fillStyle='#1e46e8';c.beginPath();c.arc(300,340,128,0,Math.PI*2);c.fill();
-      c.fillStyle='#ffffff';c.beginPath();c.arc(300,340,51,0,Math.PI*2);c.fill();
-      rect(52,710,496,112,active?'#ffffff':'#1e46e8',56);text(active?'DONE':'TAP',active?207:239,786,58,active?'#06104a':'#ffffff');
+      rect(0,0,600,900,'#ffffff',0);
+      text('ReCart',42,118,64,'#080b12');
+      rect(36,165,528,105,'#f0f1f3',12);text('One search',65,232,43,'#080b12');
+      c.strokeStyle='#183fe5';c.lineWidth=6;c.beginPath();c.arc(495,212,19,0,Math.PI*2);c.moveTo(510,226);c.lineTo(527,244);c.stroke();
+      // One search resolves into a simple, shared result set across marketplaces.
+      for(let i=0;i<3;i++){
+        const y=320+i*112;
+        rect(40,y,76,76,i===0?'#183fe5':'#10131a',8);
+        text(['Depop','eBay','Poshmark'][i],142,y+48,36,'#080b12');
+        if(active){text('✓',492,y+49,40,'#183fe5');}
+      }
+      rect(36,720,528,116,active?'#10131a':'#183fe5',12);text(active?'Saved ✓':'Save find',active?179:152,797,54);
     }else if(kind===1){
-      // An agent conversation reduced to two very clear shapes.
-      rect(10,170,455,250,'#ffffff',65);c.fillStyle='#ffffff';c.beginPath();c.moveTo(90,400);c.lineTo(70,468);c.lineTo(180,400);c.fill();
-      for(let i=0;i<3;i++)rect(65,235+i*53,310-i*58,21,'#0a1f98',10);
-      rect(140,475,450,230,active?'#1e46e8':'#0a133b',65);c.fillStyle=active?'#1e46e8':'#0a133b';c.beginPath();c.moveTo(490,690);c.lineTo(545,756);c.lineTo(540,680);c.fill();
-      text(active?'READY':'ASK',active?214:263,615,56);
+      rect(0,0,600,900,'#080b12',16);text('SeatScore',40,105,58);
+      c.strokeStyle='#ffffff';c.lineWidth=3;c.beginPath();c.moveTo(65,180);c.lineTo(535,180);c.stroke();
+      for(let row=0;row<4;row++)for(let col=0;col<6;col++){
+        const selected=row===2&&col===3;
+        rect(65+col*80,240+row*85,52,52,selected?'#ffffff':'#183fe5',12);
+        if(selected&&active){c.strokeStyle='#ffffff';c.lineWidth=3;c.strokeRect(58+col*80,233+row*85,66,66);}
+      }
+      text('Your best view.',40,685,54);text('C12',40,795,90);
+      text('✓',475,791,85);
     }else if(kind===2){
-      // A focus ring and type scale convey accessibility without a wordy explanation.
-      rect(8,170,584,550,'#ffffff',150);text('Aa',75,405,110+motion*65,'#06104a');rect(75,535,450,26,'#0a1f98',13);
-      c.fillStyle='#1e46e8';c.beginPath();c.arc(110+motion*360,548,48,0,Math.PI*2);c.fill();
+      rect(0,0,600,900,'#ffffff',24);text('For everyone.',40,115,57,'#080b12');
+      text('Aa',60,445,150+motion*40,'#080b12');
+      rect(65,570,470,8,'#080b12',0);
+      c.fillStyle='#183fe5';c.beginPath();c.arc(95+motion*400,574,30,0,Math.PI*2);c.fill();
+      text('SHOWAbility',40,807,49,'#080b12');
     }else{
-      // A simple adaptive layout: elements reflow, then settle.
-      const width=330+motion*255,x=(600-width)/2;
-      rect(x,110,width,680,'#ffffff',40);rect(x+25,145,width-50,60,'#06104a',18);
-      const gap=18,col=(width-68)/2;
-      for(let i=0;i<4;i++){const stacked=width<430;const cw=stacked?width-50:col;rect(x+25+(stacked?0:i%2*(col+gap)),240+(stacked?i*125:Math.floor(i/2)*240),cw,stacked?105:215,i%2?'#1e46e8':'#dfe7ff',20);}
+      rect(0,0,600,900,'#080b12',12);text('Find the pattern.',35,116,53);
+      const settle=(1-Math.cos(phase))*.5;
+      for(let i=0;i<6;i++){
+        const col=i%2,row=Math.floor(i/2),dx=Math.sin(i*4)*45*(1-settle),dy=Math.cos(i*3)*30*(1-settle);
+        rect(45+col*265+dx,235+row*160+dy,235,130,col?'#ffffff':'#183fe5',6);
+        rect(68+col*265+dx,268+row*160+dy,130,8,col?'#080b12':'#ffffff',0);
+        rect(68+col*265+dx,291+row*160+dy,88,8,col?'#080b12':'#ffffff',0);
+      }
+      text('Listen → Learn',40,817,47);
     }
     c.restore();
   }
@@ -290,29 +261,30 @@ export function createScrollCity(scene,renderer){
     panel.traverse(object=>{if(object.material){object.material.clippingPlanes=[new THREE.Plane(new THREE.Vector3(0,1,0),0)];}});
     return{mount,panel,face,copy,index,phones,textures:[face.material.map,null]};
   });
-  const satelliteDisplays=[3,4].map((buildingIndex,j)=>{
-    const [x,y,z,w,h,d]=blocks[buildingIndex],canvas=document.createElement('canvas');canvas.width=1024;canvas.height=1536;
+  const satelliteDisplays=[1,9].map((buildingIndex,j)=>{
+    const canvas=document.createElement('canvas');canvas.width=1024;canvas.height=1536;
     const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;texture.anisotropy=Math.min(16,renderer.capabilities.getMaxAnisotropy());
-    const display=new THREE.Mesh(new THREE.PlaneGeometry(j===0?7:5.8,j===0?3.8:6.8),new THREE.MeshBasicMaterial({map:texture,transparent:true,depthWrite:true,toneMapped:false,clippingPlanes:[new THREE.Plane(V(0,1,0),0)]}));
-    display.renderOrder=30;display.position.set(x,h-4.2,z+d/2+.15);display.visible=true;buildings[buildingIndex].add(display);
+    const display=new THREE.Mesh(new THREE.PlaneGeometry(3.4,5.1),new THREE.MeshBasicMaterial({map:texture,transparent:true,depthWrite:true,toneMapped:false,clippingPlanes:[new THREE.Plane(V(0,1,0),0)]}));
+    display.renderOrder=30;
+    if(j===0){display.position.set(6.5,4.2,-4.7);}
+    else{display.position.set(4.82,6,19);display.rotation.y=-Math.PI/2;}
+    buildings[buildingIndex].add(display);
     return{canvas,texture,kind:j+2};
   });
   // Background towers stay subordinate to the two principal displays.
   const waveform=new THREE.Group();waveform.position.set(-4.64,4.6,6.4);waveform.rotation.y=Math.PI/2;buildings[10].add(waveform);
   const waveShape=new THREE.Shape();waveShape.moveTo(-2.6,-.8);waveShape.lineTo(2.6,-.8);waveShape.absarc(2.6,0,.8,-Math.PI/2,Math.PI/2,false);waveShape.lineTo(-2.6,.8);waveShape.absarc(-2.6,0,.8,Math.PI/2,Math.PI*1.5,false);
-  const waveBody=new THREE.Mesh(new THREE.ExtrudeGeometry(waveShape,{depth:.18,bevelEnabled:true,bevelSize:.06,bevelThickness:.04,bevelSegments:4,curveSegments:32}),new THREE.MeshPhysicalMaterial({color:0xf4f7ff,metalness:.32,roughness:.17,clearcoat:1}));waveform.add(waveBody);
+  const waveBody=new THREE.Mesh(new THREE.ExtrudeGeometry(waveShape,{depth:.18,bevelEnabled:true,bevelSize:.06,bevelThickness:.04,bevelSegments:4,curveSegments:32}),new THREE.MeshStandardMaterial({color:0xf4f7ff,metalness:0,roughness:.85}));waveform.add(waveBody);
   const waveBars=[];for(let i=0;i<27;i++){const bar=box(waveform,.065,.5,.06,-2.65+i*.155,0,.27,new THREE.MeshBasicMaterial({color:0x1334c9}));waveBars.push(bar);}
   const micRing=new THREE.Mesh(new THREE.TorusGeometry(.38,.035,12,48),white);micRing.position.set(2.35,0,.29);waveform.add(micRing);
   box(waveform,.12,.36,.07,2.35,.04,.3,white);box(waveform,.035,.17,.07,2.35,-.24,.3,white);box(waveform,.23,.035,.07,2.35,-.32,.3,white);
-  // The search-morph billboard on the podium was built but switched off — turning it on gives the
-  // climb to the main sign a second animated beat instead of one plain screen.
-  // A rotating three-dimensional globe crowns the name tower.
-  const spinner=new THREE.Group();spinner.position.set(0,15.0,-9);buildings[2].add(spinner);
-  const globe=new THREE.Mesh(new THREE.SphereGeometry(1.35,48,32),new THREE.MeshPhysicalMaterial({color:0xbfcfff,metalness:.8,roughness:.2,clearcoat:1}));spinner.add(globe);
-  const orbitMaterial=new THREE.MeshBasicMaterial({color:0x263edf});
-  for(const rotation of [0,Math.PI/3,Math.PI*2/3]){const ring=new THREE.Mesh(new THREE.TorusGeometry(1.37,.023,8,96),orbitMaterial);ring.rotation.y=rotation;spinner.add(ring);}
-  for(const y of [-.65,0,.65]){const ring=new THREE.Mesh(new THREE.TorusGeometry(Math.sqrt(1.37*1.37-y*y),.023,8,96),orbitMaterial);ring.rotation.x=Math.PI/2;ring.position.y=y;spinner.add(ring);}
-  const halo=new THREE.Mesh(new THREE.TorusGeometry(1.8,.07,12,96),accent);halo.rotation.x=1.1;spinner.add(halo);
+  // Three frames resolve into one square: research, design and build as one practice.
+  const spinner=new THREE.Group();spinner.position.set(0,14.6,-10.1);buildings[2].add(spinner);
+  const frames=[white,dark,white].map((material,i)=>{
+    const frame=new THREE.Group(),size=2.6-i*.52;
+    for(const side of [-1,1]){box(frame,.09,size,.09,side*size/2,0,0,material);box(frame,size,.09,.09,0,side*size/2,0,material);}
+    spinner.add(frame);return frame;
+  });
   let previousMobile,searchFrame=-1,visualFrame=-1;
 
   function layout(mobile){
@@ -326,15 +298,15 @@ export function createScrollCity(scene,renderer){
   }
   return{billboards,buildings,assetsReady,update(p,time,mobile){
     layout(mobile);world.scale.x=mobile?.78:1;
-    liquidNormal.offset.set(time*.000009,time*.000006);
-    tickerMap.offset.x=time===0?0:(time*.00006)%1;
-    spinner.scale.x=mobile?1/.78:1;spinner.rotation.y=time===0?0:time*.00035;
+    tickerMap.offset.x=0;
+    spinner.scale.x=mobile?1/.78:1;
+    frames.forEach((frame,i)=>{frame.rotation.y=time===0?0:Math.sin(time*.0004)*(.35+i*.35);frame.rotation.z=time===0?0:Math.sin(time*.0002)*i*.12;});
     waveBars.forEach((bar,i)=>{bar.scale.y=time===0?1:.25+Math.abs(Math.sin(time*.003+i*.64))*1.85;});
     const phase=time===0?0:time*.00065;
     const interval=mobile?150:80, nextVisualFrame=(time===0?0:Math.floor(time/interval))+visualRevision*10000000;
     // Nothing that repaints below is visible before the walk begins, so skip the canvas work
     // entirely at rest instead of re-rasterizing and re-uploading textures no one can see yet.
-    if(p>.01&&nextVisualFrame!==visualFrame){
+    if(nextVisualFrame!==visualFrame){
       visualFrame=nextVisualFrame;
       satelliteDisplays.forEach(display=>{paintInterface(display.canvas,display.kind,phase);display.texture.needsUpdate=true;});
       for(const index of [1,2]){
@@ -343,18 +315,21 @@ export function createScrollCity(scene,renderer){
       }
     }
 
-    const searchProgress=time===0?1:THREE.MathUtils.clamp((p-.20)/.38,0,1),frame=Math.round(searchProgress*45);
+    // Condensed pacing: the same reveal order, packed into a shorter stretch of p so the walk
+    // reads dense and quick rather than spread thin across a long scroll.
+    const searchProgress=time===0?1:THREE.MathUtils.clamp((p-.13)/.28,0,1),frame=Math.round(searchProgress*45);
     if(frame!==searchFrame){searchFrame=frame;const sign=billboards[3];for(const t of sign.textures)if(t){drawSearch(t.image,searchProgress);t.needsUpdate=true;}}
 
     buildings.forEach((group,i)=>{
-      const start=i>=8?(i<10?-.08:.16):i===2?.42:.10+(i%3)*.055;
-      const reveal=THREE.MathUtils.smoothstep(p,start,start+.22);
+      const start=i>=8?(i<10?-.14:.08):i===2?.25:.06+(i%3)*.035;
+      const reveal=THREE.MathUtils.smoothstep(p,start,start+.16);
       group.position.y=-(1-reveal)*25;group.visible=reveal>.001;
     });
     billboards.forEach(({mount,panel,index,copy})=>{
-      const start=index===0?.47:index===2?.23:.015;
-      const reveal=THREE.MathUtils.smoothstep(p,start,start+.14);
+      const start=index===0?.3:index===2?.15:.01;
+      const reveal=THREE.MathUtils.smoothstep(p,start,start+.11);
       panel.position.y=0;panel.rotation.x=0;panel.visible=reveal>.001;
+      if(index===3)panel.visible=false;
       for(const phone of billboards[index].phones){
         phone.device.rotation.y=0;
         phone.device.rotation.z=0;
