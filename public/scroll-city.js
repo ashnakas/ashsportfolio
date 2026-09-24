@@ -9,9 +9,13 @@ export const billboardCopy=[
 
 export function cityCamera(camera,p,mobile){
   const travel=THREE.MathUtils.smoothstep(p,0,.62);
-  camera.position.set(0,1.72,34-travel*(mobile?24:27));
-  camera.lookAt(0,4.4+travel*2.1,-10);
-  camera.fov=mobile?76:58;camera.updateProjectionMatrix();camera.updateMatrixWorld(true);
+  const zoom=THREE.MathUtils.smoothstep(p,.72,.96);
+  const streetZ=34-travel*(mobile?24:27);
+  // The last beat turns the central billboard into a real title card: the
+  // camera leaves the street and lands on Ashna's name before the work begins.
+  camera.position.set(0,THREE.MathUtils.lerp(1.72,8.35,zoom),THREE.MathUtils.lerp(streetZ,-.55,zoom));
+  camera.lookAt(0,THREE.MathUtils.lerp(4.4+travel*2.1,8.8,zoom),THREE.MathUtils.lerp(-10,-9.03,zoom));
+  camera.fov=THREE.MathUtils.lerp(mobile?76:58,mobile?48:34,zoom);camera.updateProjectionMatrix();camera.updateMatrixWorld(true);
 }
 
 export function createScrollCity(scene,renderer){
@@ -63,7 +67,7 @@ export function createScrollCity(scene,renderer){
       box(world,1.15,.14,d+.15,inner+side*.5,2.9,z,dark);
       box(world,.035,.10,d+.15,inner+side*1.08,2.87,z,white);
     }
-    const group=new THREE.Group();group.name='rising-building-'+i;
+    const group=new THREE.Group();group.name='rising-building-'+i;group.userData.depth=z;
     for(const child of world.children.slice(firstChild))group.add(child);
     const panes=windows.slice(firstWindow),wm=new THREE.InstancedMesh(new THREE.PlaneGeometry(1,1),new THREE.MeshBasicMaterial({color:0x2347e5,transparent:true,opacity:.32}),panes.length),matrix=new THREE.Matrix4();
     panes.forEach(([px,py,pz,pw,ph,turn=0],j)=>{matrix.compose(V(px,py,pz),new THREE.Quaternion().setFromAxisAngle(V(0,1,0),turn),V(pw,ph,1));wm.setMatrixAt(j,matrix);});group.add(wm);world.add(group);buildings.push(group);
@@ -124,7 +128,7 @@ export function createScrollCity(scene,renderer){
     box(world,.045,.02,1.05,0,.012,z,white);
     for(const side of [-1,1])box(world,6,.012,.018,side*6,.12,z,chrome);
   }
-  const podium=new THREE.Group();podium.name='waveform-podium';world.add(podium);buildings.splice(7,0,podium);
+  const podium=new THREE.Group();podium.name='waveform-podium';podium.userData.depth=-8;world.add(podium);buildings.splice(7,0,podium);
   box(podium,6.4,4.8,2,0,2.4,-8,building);
   box(podium,6.6,.15,2.2,0,4.8,-8,chrome);
   // A running news ticker under the podium screen gives the architecture a Times Square silhouette.
@@ -320,8 +324,11 @@ export function createScrollCity(scene,renderer){
     const searchProgress=time===0?1:THREE.MathUtils.clamp((p-.13)/.28,0,1),frame=Math.round(searchProgress*45);
     if(frame!==searchFrame){searchFrame=frame;const sign=billboards[3];for(const t of sign.textures)if(t){drawSearch(t.image,searchProgress);t.needsUpdate=true;}}
 
-    buildings.forEach((group,i)=>{
-      const start=i>=8?(i<10?-.14:.08):i===2?.25:.06+(i%3)*.035;
+    buildings.forEach(group=>{
+      // The street rises by depth: storefronts nearest the camera, then the
+      // intersection, then the distant towers. It reads like walking in.
+      const depth=group.userData.depth??-8;
+      const start=depth>=14?.20:depth>=0?.35:depth>=-12?.50:.64;
       const reveal=THREE.MathUtils.smoothstep(p,start,start+.16);
       group.position.y=-(1-reveal)*25;group.visible=reveal>.001;
     });

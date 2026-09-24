@@ -30,7 +30,7 @@ a:focus-visible{outline-color:#ff897e}.work-link span,.coordinates i,#enter-work
 .scene{background:#8199c6}.coordinates{display:none}
 @media(prefers-reduced-motion:reduce){#scene-loader{transition:none}}
 
-.scene{background:#1935ed}#journey{height:175svh}.journey-footer{color:#fff}.wordmark span{display:none}.portfolio-work{background:#0b0e18;color:#f1f3f9}.portfolio-work-title em{color:#9badff}.in-work .site-header{background:#0b0e18;color:#f1f3f9}
+.scene{background:#1935ed}#journey{height:400svh}.journey-footer{color:#fff}.wordmark span{display:none}.portfolio-work{background:#0b0e18;color:#f1f3f9}.portfolio-work-title em{color:#9badff}.in-work .site-header{background:#0b0e18;color:#f1f3f9}
 
 .scene{z-index:6}.scene-ui{z-index:7}
 
