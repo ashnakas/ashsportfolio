@@ -5,13 +5,15 @@ const section=document.querySelector('#journey'),container=document.querySelecto
 const status=document.querySelector('#journey-status'),count=document.querySelector('#journey-count'),fill=document.querySelector('#progress-fill');
 const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const clamp=THREE.MathUtils.clamp;
-let renderer,world,camera,raf,progress=0,target=0,last=0,ready=false;
+let renderer,world,camera,raf,progress=0,target=0,last=0,ready=false,sceneInteractive=false;
 let lastWheel=-1000,destination=0,movingUntil=0,touch=null;
 const pointer=new THREE.Vector2(),parallax=new THREE.Vector2();
 const range=()=>Math.max(1,section.offsetHeight-innerHeight);
 // Three deliberate gestures reveal the intro; a fourth takes the visitor into the work.
 const stops=()=>[0,range()*.2,range()*.4,range()*.62];
-const inside=()=>ready&&scrollY<section.offsetTop+section.offsetHeight-2;
+// Do not accept a gesture until a complete scene has been painted. Before this
+// point a browser may apply trackpad momentum to the document and skip the walk.
+const inside=()=>ready&&sceneInteractive&&scrollY<section.offsetTop+section.offsetHeight-2;
 function scrollState(){target=clamp(scrollY/range(),0,1);document.body.classList.toggle('in-work',scrollY>=section.offsetHeight-innerHeight*.05);}
 function advance(direction){
   const positions=stops();let base=performance.now()<movingUntil?destination:scrollY;
@@ -34,6 +36,9 @@ try{
     if(!ready)return;
     world.update(target,reduced?0:performance.now(),innerWidth<768);
     cityCamera(camera,target,innerWidth<768);renderer.render(scene,camera);
+    // Unlock only after the scene has a visible first frame. This keeps wheel,
+    // touch, and keyboard input deterministic on slower machines too.
+    sceneInteractive=true;
     window.cityLoadProgress?.(100);clearTimeout(window.cityTimer);document.body.classList.remove('scene-failed');document.body.classList.add('scene-ready');
   });
   window.addEventListener('scroll',scrollState,{passive:true});
