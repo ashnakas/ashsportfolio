@@ -43,10 +43,10 @@ const projects=[
 const projectMarkup=projects.map(project=>`<article class="case-card ${project.className}">
   <a class="case-visual" href="/${project.slug}" aria-label="Open the full ${project.name} case study">${project.visual}<span class="case-open">Full case study ↗</span></a>
   <div class="case-heading"><span>${project.number}</span><div><p>${project.eyebrow}</p><h3>${project.name}</h3><h4>${project.premise}</h4></div></div>
-  <div class="case-story"><div><span>Context</span><p>${project.challenge}</p></div><div><span>What I did</span><p>${project.move}</p></div><div><span>Outcome</span><p>${project.result}</p></div></div>
+  <div class="case-summary"><p>${project.result}</p><a href="/${project.slug}">Read case study ↗</a></div>
 </article>`).join('');
 
-work.innerHTML=`<div class="work-heading"><span>01 / SELECTED WORK</span><div><p>PRODUCT · RESEARCH · CODE</p><h2>Work you can<br>understand at a glance.</h2></div></div>
+work.innerHTML=`<div class="work-heading"><span>01 / SELECTED WORK</span><div><p>PRODUCT · RESEARCH · CODE</p><h2>Selected work.</h2></div></div>
 <div class="editorial-projects">${projectMarkup}</div>
 <section class="more-work" aria-labelledby="more-title"><h2 id="more-title">More work, same approach.</h2>
   <a href="/projects/opslens"><span>OpsLens</span><span>Mapped 50k+ synthetic operational events into decisions about routing, staffing, and automation.</span><span>Python / SQL · 2026 ↗</span></a>
