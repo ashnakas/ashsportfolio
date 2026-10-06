@@ -1,52 +1,22 @@
 import * as THREE from 'three';
 import {createScrollCity,cityCamera} from './scroll-city.js';
-
-const section=document.querySelector('#journey'),container=document.querySelector('#canvas-container'),ui=document.querySelector('#scene-ui');
-const status=document.querySelector('#journey-status'),count=document.querySelector('#journey-count'),fill=document.querySelector('#progress-fill');
-const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
-const clamp=THREE.MathUtils.clamp;
-let renderer,world,camera,raf,progress=0,target=0,last=0,ready=false;
-const pointer=new THREE.Vector2(),parallax=new THREE.Vector2();
-const range=()=>Math.max(1,section.offsetHeight-innerHeight);
-function scrollState(){
-  target=clamp((scrollY-section.offsetTop)/range(),0,1);
-  document.body.classList.toggle('in-work',scrollY>=section.offsetTop+section.offsetHeight-innerHeight*.05);
-}
-function fail(error){console.error('Scroll City could not start:',error);clearTimeout(window.cityTimer);window.cityFailed();}
+const container=document.querySelector('#canvas-container'),reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const destinations={recart:{position:[.6,5.4,23],look:[-4.6,5.4,18]},pinwheels:{position:[-.8,6.5,13],look:[4.8,6,7]},showability:{position:[0,5,7],look:[6.5,4.7,-4.7]},moonbase:{position:[-2,18,2],look:[-7.5,17,-12]}};
+let ready=false,raf,last=0,focus=null,returning=false,savedPosition,savedLook;
 try{
-  // Preserve crisp type and edges on both screen sizes; cap resolution for mobile memory.
-  const mobileGpu=innerWidth<768;
-  renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance',precision:'highp'});
-  renderer.localClippingEnabled=true;
-  renderer.setPixelRatio(Math.min(devicePixelRatio,mobileGpu?2:2.5));renderer.setSize(innerWidth,innerHeight);
-  renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;container.append(renderer.domElement);
-  const scene=new THREE.Scene();camera=new THREE.PerspectiveCamera(42,innerWidth/innerHeight,.1,180);
-  world=createScrollCity(scene,renderer);ready=true;window.cityLoadProgress?.(55);
-  Promise.race([world.assetsReady,new Promise(resolve=>setTimeout(resolve,8000))]).then(()=>{
-    if(!ready)return;
-    world.update(target,reduced?0:performance.now(),innerWidth<768);
-    cityCamera(camera,target,innerWidth<768);renderer.render(scene,camera);
-    window.cityLoadProgress?.(100);clearTimeout(window.cityTimer);document.body.classList.remove('scene-failed');document.body.classList.add('scene-ready');
-  });
-  window.addEventListener('scroll',scrollState,{passive:true});
-  window.addEventListener('pointermove',event=>{pointer.set(event.clientX/innerWidth*2-1,1-event.clientY/innerHeight*2);},{passive:true});
-  window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;renderer.setPixelRatio(Math.min(devicePixelRatio,innerWidth<768?2:2.5));renderer.setSize(innerWidth,innerHeight);scrollState();});
-  renderer.domElement.addEventListener('webglcontextlost',event=>{event.preventDefault();ready=false;cancelAnimationFrame(raf);fail(new Error('Graphics context lost'));});
-  renderer.domElement.addEventListener('webglcontextrestored',()=>location.reload());
-  scrollState();progress=target;
-  function draw(now){
-    raf=requestAnimationFrame(draw);if(document.hidden||now-last<20)return;last=now;if(scrollY>section.offsetHeight+innerHeight)return;
-    progress=reduced?target:THREE.MathUtils.lerp(progress,target,.16);if(Math.abs(progress-target)<.0005)progress=target;
-    const mobile=innerWidth<768;cityCamera(camera,progress,mobile);
-    if(!reduced&&!mobile){parallax.lerp(pointer,.07);camera.rotation.y-=parallax.x*.006;camera.rotation.x+=parallax.y*.004;}
-    world.update(progress,reduced?0:now,mobile);
-    const title=document.querySelector('#intro-title');title.style.opacity=1-clamp(progress/.19,0,1);title.style.visibility=progress<.19?'visible':'hidden';
-    const beat=progress<.20?0:progress<.48?1:progress<.72?2:3;count.textContent='0'+beat+' / 03';
-    status.textContent=beat===3?'ENTER PORTFOLIO ↓':'SCROLL TO ENTER ↓';
-    fill.style.transform=`scaleX(${progress})`;
-    document.querySelector('#enter-work').classList.toggle('visible',progress>.84);
-    const fade=1-clamp((scrollY-section.offsetHeight+innerHeight*.22)/(innerHeight*.22),0,1);container.style.opacity=fade;ui.style.opacity=fade;
-    renderer.render(scene,camera);
-  }
-  raf=requestAnimationFrame(draw);
-}catch(error){ready=false;fail(error);}
+ const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
+ renderer.setPixelRatio(Math.min(devicePixelRatio,innerWidth<768?1.5:2));renderer.setSize(innerWidth,innerHeight);renderer.localClippingEnabled=true;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;renderer.shadowMap.enabled=innerWidth>=768;renderer.shadowMap.type=THREE.PCFSoftShadowMap;container.append(renderer.domElement);
+ const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(52,innerWidth/innerHeight,.1,180),world=createScrollCity(scene,renderer),look=new THREE.Vector3(0,6,-5),raycaster=new THREE.Raycaster(),pointer=new THREE.Vector2();
+ cityCamera(camera,0,innerWidth<768);const homePosition=camera.position.clone(),homeLook=look.clone();let goalPosition=homePosition.clone(),goalLook=look.clone();
+ window.cityLoadProgress?.(65);
+ world.assetsReady.then(()=>{world.update(1,0,innerWidth<768);renderer.render(scene,camera);ready=true;clearTimeout(window.cityTimer);document.body.classList.add('scene-ready');window.cityLoadProgress?.(100);});
+ function resize(){camera.aspect=innerWidth/innerHeight;renderer.setPixelRatio(Math.min(devicePixelRatio,innerWidth<768?1.5:2));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=innerWidth>=768;if(!focus){cityCamera(camera,0,innerWidth<768);homePosition.copy(camera.position);goalPosition.copy(homePosition);}camera.updateProjectionMatrix();}
+ window.addEventListener('resize',resize);
+ window.addEventListener('city-focus',e=>{const destination=destinations[e.detail];if(!destination)return;if(!focus){savedPosition=camera.position.clone();savedLook=look.clone();}focus=e.detail;returning=false;goalPosition.fromArray(destination.position);goalLook.fromArray(destination.look);document.querySelectorAll('.project-dock button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.project===focus));});
+ window.addEventListener('city-return',()=>{focus=null;returning=true;goalPosition.copy(savedPosition||homePosition);goalLook.copy(savedLook||homeLook);document.querySelectorAll('.project-dock button').forEach(b=>b.setAttribute('aria-pressed','false'));});
+ function hit(e){const rect=renderer.domElement.getBoundingClientRect();pointer.set((e.clientX-rect.left)/rect.width*2-1,1-(e.clientY-rect.top)/rect.height*2);raycaster.setFromCamera(pointer,camera);return raycaster.intersectObjects(world.targets,true).find(h=>{let o=h.object;while(o){if(!o.visible)return false;o=o.parent;}return true;});}
+ container.addEventListener('pointermove',e=>{if(!ready)return;container.style.cursor=hit(e)?'pointer':'default';});container.addEventListener('click',e=>{if(!ready||focus)return;const selected=hit(e);if(selected)window.dispatchEvent(new CustomEvent('city-select',{detail:selected.object.userData.project}));});
+ renderer.domElement.addEventListener('webglcontextlost',e=>{e.preventDefault();ready=false;cancelAnimationFrame(raf);window.cityFailed();});renderer.domElement.addEventListener('webglcontextrestored',()=>location.reload());
+ function draw(now){raf=requestAnimationFrame(draw);if(!ready||document.hidden||now-last<33||scrollY>innerHeight*1.2)return;const delta=Math.min((now-last)/1000,.1);last=now;const alpha=reduced?1:1-Math.exp(-delta*5);camera.position.lerp(goalPosition,alpha);look.lerp(goalLook,alpha);if(returning&&camera.position.distanceTo(goalPosition)<.002){camera.position.copy(goalPosition);look.copy(goalLook);returning=false;}camera.lookAt(look);camera.updateMatrixWorld();world.update(1,reduced?0:now,innerWidth<768);renderer.render(scene,camera);}
+ raf=requestAnimationFrame(draw);
+}catch(error){console.error('City could not start',error);clearTimeout(window.cityTimer);window.cityFailed();}

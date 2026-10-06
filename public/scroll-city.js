@@ -8,14 +8,8 @@ export const billboardCopy=[
 ];
 
 export function cityCamera(camera,p,mobile){
-  const travel=THREE.MathUtils.smoothstep(p,0,.62);
-  const zoom=THREE.MathUtils.smoothstep(p,.72,.96);
-  const streetZ=34-travel*(mobile?24:27);
-  // The last beat turns the central billboard into a real title card: the
-  // camera leaves the street and lands on Ashna's name before the work begins.
-  camera.position.set(0,THREE.MathUtils.lerp(1.72,8.35,zoom),THREE.MathUtils.lerp(streetZ,-.55,zoom));
-  camera.lookAt(0,THREE.MathUtils.lerp(4.4+travel*2.1,8.8,zoom),THREE.MathUtils.lerp(-10,-9.03,zoom));
-  camera.fov=THREE.MathUtils.lerp(mobile?76:58,mobile?48:34,zoom);camera.updateProjectionMatrix();camera.updateMatrixWorld(true);
+  camera.position.set(mobile?0:1.2, mobile?8:7.4, mobile?38:31-p*4);
+  camera.lookAt(0,6,-5);camera.fov=mobile?65:52;camera.updateProjectionMatrix();camera.updateMatrixWorld(true);
 }
 
 export function createScrollCity(scene,renderer){
@@ -29,11 +23,11 @@ export function createScrollCity(scene,renderer){
   const blue=new THREE.MeshBasicMaterial({color:0x3158ff,toneMapped:false});
   const white=new THREE.MeshBasicMaterial({color:0xffffff,toneMapped:false});
   const asphalt=new THREE.MeshStandardMaterial({color:0x080f28,metalness:0,roughness:.95});
-  scene.add(new THREE.AmbientLight(0xffffff,1.5));
-  const sun=new THREE.DirectionalLight(0xffffff,1.7);sun.position.set(-8,22,15);scene.add(sun);
+  scene.add(new THREE.AmbientLight(0xffffff,.95));
+  const sun=new THREE.DirectionalLight(0xffffff,1.7);sun.position.set(-8,22,15);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-28;sun.shadow.camera.right=28;sun.shadow.camera.top=28;sun.shadow.camera.bottom=-28;sun.shadow.camera.far=90;sun.shadow.bias=-.0005;sun.shadow.normalBias=.06;scene.add(sun);
   // No reflection environment: with everything matte (metalness 0), nothing needs one to read
   // correctly, and skipping it removes a render-to-texture pass the old chrome/glass relied on.
-  function box(parent,w,h,d,x,y,z,material=building){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material);m.position.set(x,y,z);parent.add(m);return m;}
+  function box(parent,w,h,d,x,y,z,material=building){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material);m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m;}
   function line(parent,a,b,r=.018,material=white){const delta=new THREE.Vector3().subVectors(b,a),m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,delta.length(),6),material);m.position.copy(a).add(b).multiplyScalar(.5);m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),delta.normalize());parent.add(m);return m;}
   const V=(x,y,z)=>new THREE.Vector3(x,y,z);
 
@@ -91,8 +85,8 @@ export function createScrollCity(scene,renderer){
     const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;texture.anisotropy=Math.min(16,renderer.capabilities.getMaxAnisotropy());return texture;
   }
   [
-    [0,-6,7.1,-2.76,4.7,1.38,'DESIGN','FOR PEOPLE.',false],
-    [1,6.5,7.8,-4.76,5.1,1.48,'BUILD','WITH INTENTION.',true]
+    [0,-6,7.1,-2.76,4.7,1.38,'RECART','SEARCH. COMPARE. SAVE.',false],
+    [1,6.5,7.8,-4.76,5.1,1.48,'SHOWABILITY','ACCESS STARTS HERE.',true]
   ].forEach(([buildingIndex,x,y,z,w,h,label,detail,invert])=>{
     // A crisp white edge (flat, unlit — always pure white regardless of light) gives every plaque
     // a hard graphic border instead of a shaded chrome bevel.
@@ -113,9 +107,9 @@ export function createScrollCity(scene,renderer){
   }
   [
     [7,-7.2,19,1,'RECART','ONE SEARCH. MORE POSSIBILITIES.'],
-    [8,7.4,19,-1,'RESEARCH','LISTEN. FIND THE PATTERN.'],
+    [8,7.4,19,-1,'MOON BASE','PLAY. EXPERIMENT. BUILD.'],
     [9,-7.2,7,1,'SHOWABILITY','ACCESS STARTS HERE.'],
-    [10,7.4,7,-1,'SEATSCORE','HELP PEOPLE DECIDE.']
+    [10,7.4,7,-1,'PINWHEELS','GIVE THE NEXT IDEA DIRECTION.']
   ].forEach(([buildingIndex,x,z,side,label,detail])=>{
     const inner=x+side*2.5,px=inner+side*.16;
     box(buildings[buildingIndex],.07,.62,2.5,px,2.62,z,dark);
@@ -168,7 +162,17 @@ export function createScrollCity(scene,renderer){
 
     const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=Math.min(16,renderer.capabilities.getMaxAnisotropy());return t;
   }
-  const assetsReady=Promise.resolve();
+  const targets=[];
+  function target(mesh,key){mesh.userData.project=key;targets.push(mesh);}
+  let finishPin;const pinReady=new Promise(resolve=>{finishPin=resolve;});
+  const pinTexture=new THREE.TextureLoader().load('/pinwheels/case-study-board.png',finishPin,undefined,finishPin);
+  pinTexture.colorSpace=THREE.SRGBColorSpace;pinTexture.repeat.set(1,1300/1620);pinTexture.offset.y=1-1300/1620;
+  const pinDisplay=new THREE.Mesh(new THREE.PlaneGeometry(3.1,3.75),new THREE.MeshBasicMaterial({map:pinTexture,toneMapped:false}));
+  pinDisplay.position.set(4.82,5.2,7);pinDisplay.rotation.y=-Math.PI/2;world.add(pinDisplay);target(pinDisplay,'pinwheels');
+  // A physical pinwheel beside its project: quiet motion within the architectural palette.
+  const pinwheel=new THREE.Group();pinwheel.position.set(5,10,7);world.add(pinwheel);
+  for(let i=0;i<4;i++){const blade=new THREE.Mesh(new THREE.PlaneGeometry(.7,1.2),new THREE.MeshStandardMaterial({color:i%2?0xffffff:0x183fe5,side:THREE.DoubleSide,roughness:.9}));blade.rotation.z=i*Math.PI/2;blade.position.set(Math.sin(i*Math.PI/2)*.42,Math.cos(i*Math.PI/2)*.42,0);pinwheel.add(blade);}
+  const assetsReady=Promise.race([pinReady,new Promise(resolve=>setTimeout(resolve,5000))]);
   const visualRevision=0;
   function visualBillboard(canvas,index){
     const ctx=canvas.getContext('2d'),h=canvas.height;ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,canvas.width,canvas.height);
@@ -202,14 +206,14 @@ export function createScrollCity(scene,renderer){
       }
       rect(36,720,528,116,active?'#10131a':'#183fe5',12);text(active?'Saved ✓':'Save find',active?179:152,797,54);
     }else if(kind===1){
-      rect(0,0,600,900,'#080b12',16);text('SeatScore',40,105,58);
+      rect(0,0,600,900,'#080b12',16);text('Pinwheels',40,105,58);
       c.strokeStyle='#ffffff';c.lineWidth=3;c.beginPath();c.moveTo(65,180);c.lineTo(535,180);c.stroke();
       for(let row=0;row<4;row++)for(let col=0;col<6;col++){
         const selected=row===2&&col===3;
         rect(65+col*80,240+row*85,52,52,selected?'#ffffff':'#183fe5',12);
         if(selected&&active){c.strokeStyle='#ffffff';c.lineWidth=3;c.strokeRect(58+col*80,233+row*85,66,66);}
       }
-      text('Your best view.',40,685,54);text('C12',40,795,90);
+      text('Spin this idea.',40,685,54);text('Explore →',40,795,62);
       text('✓',475,791,85);
     }else if(kind===2){
       rect(0,0,600,900,'#ffffff',24);text('For everyone.',40,115,57,'#080b12');
@@ -289,6 +293,13 @@ export function createScrollCity(scene,renderer){
     for(const side of [-1,1]){box(frame,.09,size,.09,side*size/2,0,0,material);box(frame,size,.09,.09,0,side*size/2,0,material);}
     spinner.add(frame);return frame;
   });
+  target(billboards[1].phones[0].device.children[1],'recart');target(satelliteDisplays.length?buildings[1].children.find(o=>o.renderOrder===30):billboards[0].face,'showability');
+  const observatory=new THREE.Group();observatory.position.set(-7.5,16,-12);world.add(observatory);
+  const dome=new THREE.Mesh(new THREE.SphereGeometry(1.9,24,12,0,Math.PI*2,0,Math.PI/2),secondary);observatory.add(dome);
+  const telescope=new THREE.Group();telescope.position.set(0,1.7,0);telescope.rotation.z=-.65;observatory.add(telescope);
+  const tube=new THREE.Mesh(new THREE.CylinderGeometry(.25,.3,2.4,16),dark);telescope.add(tube);
+  const lens=new THREE.Mesh(new THREE.CylinderGeometry(.29,.29,.1,16),blue);lens.position.y=1.22;telescope.add(lens);
+  const moonSign=new THREE.Mesh(new THREE.PlaneGeometry(3.4,.85),new THREE.MeshBasicMaterial({map:plateTexture('MOON BASE','EXPERIMENTS IN INTERACTION'),toneMapped:false}));moonSign.position.set(0,.3,2);observatory.add(moonSign);target(moonSign,'moonbase');
   let previousMobile,searchFrame=-1,visualFrame=-1;
 
   function layout(mobile){
@@ -300,11 +311,11 @@ export function createScrollCity(scene,renderer){
       panel.scale.set(w,h,1);if(mobile&&!textures[1])textures[1]=texture(copy,index,true);face.material.map=textures[mobile?1:0];
     });
   }
-  return{billboards,buildings,assetsReady,update(p,time,mobile){
-    layout(mobile);world.scale.x=mobile?.78:1;
+  return{billboards,buildings,assetsReady,targets,update(p,time,mobile){
+    layout(mobile);world.scale.x=mobile?.78:1;pinwheel.rotation.z=time*.00012;
     tickerMap.offset.x=0;
     spinner.scale.x=mobile?1/.78:1;
-    frames.forEach((frame,i)=>{frame.rotation.y=time===0?0:Math.sin(time*.0004)*(.35+i*.35);frame.rotation.z=time===0?0:Math.sin(time*.0002)*i*.12;});
+    frames.forEach((frame,i)=>{frame.visible=false;frame.rotation.y=time===0?0:Math.sin(time*.0004)*(.35+i*.35);frame.rotation.z=time===0?0:Math.sin(time*.0002)*i*.12;});
     waveBars.forEach((bar,i)=>{bar.scale.y=time===0?1:.25+Math.abs(Math.sin(time*.003+i*.64))*1.85;});
     const phase=time===0?0:time*.00065;
     const interval=mobile?150:80, nextVisualFrame=(time===0?0:Math.floor(time/interval))+visualRevision*10000000;
@@ -330,12 +341,12 @@ export function createScrollCity(scene,renderer){
       const depth=group.userData.depth??-8;
       const start=depth>=14?.20:depth>=0?.35:depth>=-12?.50:.64;
       const reveal=THREE.MathUtils.smoothstep(p,start,start+.16);
-      group.position.y=-(1-reveal)*25;group.visible=reveal>.001;
+      group.position.y=0;group.visible=true;
     });
     billboards.forEach(({mount,panel,index,copy})=>{
       const start=index===0?.3:index===2?.15:.01;
       const reveal=THREE.MathUtils.smoothstep(p,start,start+.11);
-      panel.position.y=0;panel.rotation.x=0;panel.visible=reveal>.001;
+      panel.position.y=0;panel.rotation.x=0;panel.visible=true;
       if(index===3)panel.visible=false;
       for(const phone of billboards[index].phones){
         phone.device.rotation.y=0;
