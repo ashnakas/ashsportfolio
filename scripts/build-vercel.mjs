@@ -1,87 +1,55 @@
 import {cp, mkdir, readFile, rm, writeFile} from 'node:fs/promises';
 import {dirname, join} from 'node:path';
-import {fileURLToPath} from 'node:url';
+import {fileURLToPath, pathToFileURL} from 'node:url';
 import {spawn} from 'node:child_process';
+import ts from 'typescript';
+import {createElement} from 'react';
+import {renderToStaticMarkup} from 'react-dom/server';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const output = join(root, 'vercel-dist');
-const port = 8971;
-
-// The case-study pages are real React Server Component routes (app/recart, app/pinwheels,
-// app/projects/[slug]) — they carry the actual case-study content, not a duplicate. Rather than
-// hand-copying that copy into a second static template (which drifts out of sync), we build the
-// app for real, boot it once, and crawl the rendered HTML straight into the static export.
-const caseStudyRoutes = [
-  'recart',
-  'pinwheels',
-  'projects/showability',
-  'projects/seatscore',
-  'projects/opslens',
-  'projects/cnn',
-];
+const renderDirectory = join(root, 'dist/static-render');
 
 function run(cmd, args) {
   return new Promise((resolve, reject) => {
-    const child = spawn(cmd, args, {cwd: root, stdio: 'inherit'});
+    const child = spawn(cmd, args, {cwd:root, stdio:'inherit'});
     child.on('error', reject);
-    child.on('exit', (code) => (code === 0 ? resolve() : reject(new Error(`${cmd} ${args.join(' ')} exited with code ${code}`))));
+    child.on('exit', code => code === 0 ? resolve() : reject(new Error(`${cmd} ${args.join(' ')} exited with code ${code}`)));
   });
 }
 
-async function waitForServer(url, attempts = 60) {
-  for (let i = 0; i < attempts; i++) {
-    try {
-      const res = await fetch(url);
-      if (res.status < 500) return;
-    } catch {}
-    await new Promise((resolve) => setTimeout(resolve, 500));
-  }
-  throw new Error(`Server never became ready at ${url}`);
-}
-
+// Validate the application with its normal build, then render its actual shared
+// components to static HTML. No local Worker server or duplicated project copy.
 await run('npx', ['vinext', 'build']);
-
-await rm(output, {recursive: true, force: true});
-await mkdir(output, {recursive: true});
-await cp(join(root, 'public'), output, {recursive: true});
-await cp(join(root, 'dist/client/_next'), join(output, '_next'), {recursive: true});
+await rm(output, {recursive:true, force:true});
+await mkdir(output, {recursive:true});
+await cp(join(root, 'public'), output, {recursive:true});
 await writeFile(join(output, 'index.html'), await readFile(join(root, 'app/sprint.html'), 'utf8'));
+await cp(join(root, 'app/case-study.css'), join(output, 'case-study.css'));
+await cp(join(root, 'app/globals.css'), join(output, 'case-global.css'));
+await mkdir(renderDirectory, {recursive:true});
 
-const server = spawn('npx', ['wrangler', 'dev', '--config', 'dist/server/wrangler.json', '--port', String(port)], {
-  cwd: root,
-  stdio: ['ignore', 'ignore', 'pipe'],
-});
-let serverError = '';
-server.stderr.on('data', (chunk) => {
-  serverError += chunk;
-});
-
-try {
-  await waitForServer(`http://localhost:${port}/${caseStudyRoutes[0]}`);
-  for (const route of caseStudyRoutes) {
-    const res = await fetch(`http://localhost:${port}/${route}`);
-    if (!res.ok) throw new Error(`Failed to render /${route}: HTTP ${res.status}`);
-    let html = await res.text();
-    // next/image's on-demand resize endpoint needs a live server; point straight at the
-    // already-copied source file instead so the static export needs no backend.
-    html = html.replace(/\/_next\/image\?url=([^&"']+)(?:&amp;[^"']*|&[^"']*)?/g, (_match, encoded) => decodeURIComponent(encoded));
-    // These pages are static content with no interactivity except one scroll-spy nav, so the
-    // client bundle isn't worth shipping — and vinext's Link component assumes a live RSC
-    // server for transitions, which throws and swallows the click on a script-free static host.
-    // Stripping the hydration scripts leaves every link a plain, always-working <a> tag.
-    html = html
-      .replace(/<script\b[^>]*>[\s\S]*?<\/script>/g, '')
-      .replace(/<script\b[^>]*\/>/g, '')
-      .replace(/<link rel="modulepreload"[^>]*>/g, '');
-    const dir = join(output, route);
-    await mkdir(dir, {recursive: true});
-    await writeFile(join(dir, 'index.html'), html);
-  }
-} catch (error) {
-  console.error(serverError);
-  throw error;
-} finally {
-  server.kill();
+async function loadStaticComponent(sourcePath, name) {
+  const source = (await readFile(join(root, sourcePath), 'utf8')).replace(/^import\s+['"][^'"]+\.css['"];?\s*$/gm, '');
+  const {outputText} = ts.transpileModule(source, {
+    compilerOptions:{jsx:ts.JsxEmit.ReactJSX, target:ts.ScriptTarget.ES2022, module:ts.ModuleKind.ESNext}
+  });
+  const modulePath = join(renderDirectory, `${name}.mjs`);
+  await writeFile(modulePath, outputText);
+  return import(pathToFileURL(modulePath).href);
 }
-
-console.log(`Vercel static output ready at ${output}`);
+const {default:CaseStudy, projects} = await loadStaticComponent('app/case-study-template.tsx', 'case-study');
+const {default:Journal, metadata:journalMetadata} = await loadStaticComponent('app/making/moon-base/page.tsx', 'journal');
+const escape = value => String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
+async function exportPage(route, title, description, component) {
+  const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escape(title)}</title><meta name="description" content="${escape(description)}"><link rel="icon" href="/favicon.svg"><link rel="stylesheet" href="/case-global.css"><link rel="stylesheet" href="/case-study.css"></head><body>${renderToStaticMarkup(component)}</body></html>`;
+  const directory = join(output, route);
+  await mkdir(directory, {recursive:true});
+  await writeFile(join(directory, 'index.html'), html);
+}
+for (const [key, project] of Object.entries(projects)) {
+  const route = ['recart', 'pinwheels'].includes(key) ? key : `projects/${key}`;
+  await exportPage(route, `${project.title} — Ashna Kasireddy`, project.summary, createElement(CaseStudy, {project}));
+}
+await exportPage('making/moon-base', journalMetadata.title, journalMetadata.description, createElement(Journal));
+console.log(`Vercel static output ready: homepage, city, ${Object.keys(projects).length} case studies, and making journal.`);
